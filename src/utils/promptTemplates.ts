@@ -7,17 +7,17 @@ export const PROMPT_TEMPLATES: PromptTemplate[] = [
     iconName: 'Wrench',
     description: 'Ajustar alineación, espaciado, colores o comportamiento responsive.',
     generatePrompt: (data: SelectedElementData, userInstruction?: string) => {
-      return `### 🛠️ Tarea: Corregir Estilos / Bug Visual
+      return `### Tarea: Corregir Estilos / Bug Visual
 
-**Ubicación del Componente:**
-${data.source ? `- 📁 Archivo: \`${data.source.fileName}:${data.source.lineNumber}\` (${data.source.framework?.toUpperCase() || 'Web'})` : '- 📁 Archivo: No detectado directamente (inspeccionado en el DOM)'}
-- ⚛️ Jerarquía: \`${data.hierarchy.map(h => h.name).join(' > ')}\`
-- 🏷️ Tag HTML: \`<${data.tagName}>\` ${data.id ? `#${data.id}` : ''}
+**Ubicacion del Componente:**
+${data.source ? `- Archivo: \`${data.source.fileName}:${data.source.lineNumber}\` (${data.source.framework?.toUpperCase() || 'WEB'})` : '- Archivo: No detectado directamente (inspeccionado en el DOM)'}
+- Jerarquia: \`${data.hierarchy.map(h => h.name).join(' > ')}\`
+- Tag HTML: \`<${data.tagName}>\` ${data.id ? `#${data.id}` : ''}
 
 **Clases y Estilos Actuales:**
 - Clases Tailwind: \`${data.tailwindClasses.join(' ') || 'Ninguna'}\`
 ${data.customClasses.length > 0 ? `- Clases personalizadas: \`${data.customClasses.join(' ')}\`` : ''}
-- Dimensiones: ${data.computedStyles.width} × ${data.computedStyles.height} (Display: \`${data.computedStyles.display}\`)
+- Dimensiones: ${data.computedStyles.width} x ${data.computedStyles.height} (Display: \`${data.computedStyles.display}\`)
 - Margins: \`${data.computedStyles.margin}\` | Paddings: \`${data.computedStyles.padding}\`
 - Colores: Texto \`${data.computedStyles.color}\`, Fondo \`${data.computedStyles.backgroundColor}\`
 
@@ -26,10 +26,10 @@ ${data.customClasses.length > 0 ? `- Clases personalizadas: \`${data.customClass
 ${data.outerHTMLSnippet}
 \`\`\`
 
-**Instrucción específica del desarrollador:**
+**Instruccion del desarrollador:**
 ${userInstruction || 'Por favor corrige los estilos visuales de este elemento para que se vea limpio, alineado y responsive.'}
 
-Por favor proporciona el código modificado directamente aplicable al archivo origen.`;
+Proporciona el codigo modificado directamente aplicable al archivo origen.`;
     }
   },
   {
@@ -38,22 +38,22 @@ Por favor proporciona el código modificado directamente aplicable al archivo or
     iconName: 'Sparkles',
     description: 'Añadir eventos, estados, props o nueva lógica a este componente.',
     generatePrompt: (data: SelectedElementData, userInstruction?: string) => {
-      return `### ⚡ Tarea: Añadir Funcionalidad al Componente
+      return `### Tarea: Añadir Funcionalidad al Componente
 
-**Ubicación en el Proyecto:**
-${data.source ? `- 📁 Archivo: \`${data.source.fileName}:${data.source.lineNumber}\`` : '- 📁 Archivo: No detectado directamente'}
-- ⚛️ Componente: \`${data.hierarchy[data.hierarchy.length - 1]?.name || data.tagName}\`
-- 🌳 Jerarquía completa: \`${data.hierarchy.map(h => h.name).join(' > ')}\`
+**Ubicacion en el Proyecto:**
+${data.source ? `- Archivo: \`${data.source.fileName}:${data.source.lineNumber}\`` : '- Archivo: No detectado directamente'}
+- Componente: \`${data.hierarchy[data.hierarchy.length - 1]?.name || data.tagName}\`
+- Jerarquia completa: \`${data.hierarchy.map(h => h.name).join(' > ')}\`
 
 **Estructura del Elemento:**
 \`\`\`html
 ${data.outerHTMLSnippet}
 \`\`\`
 
-**Qué necesito implementar:**
+**Requerimiento a implementar:**
 ${userInstruction || 'Añade la interactividad necesaria (manejo de estado, callbacks o eventos) a este componente.'}
 
-Indica exactamente en qué archivo y líneas hacer los cambios con las mejores prácticas de TypeScript/React/Vue.`;
+Indica exactamente en que archivo y lineas hacer los cambios con las mejores practicas de TypeScript/React/Vue.`;
     }
   },
   {
@@ -62,11 +62,11 @@ Indica exactamente en qué archivo y líneas hacer los cambios con las mejores p
     iconName: 'RefreshCw',
     description: 'Mejorar arquitectura, legibilidad, tipado TypeScript o separar en subcomponentes.',
     generatePrompt: (data: SelectedElementData, userInstruction?: string) => {
-      return `### 🧹 Tarea: Refactorización y Limpieza de Código
+      return `### Tarea: Refactorizacion y Limpieza de Codigo
 
-**Contexto del Código:**
-${data.source ? `- 📁 Archivo: \`${data.source.fileName}:${data.source.lineNumber}\`` : ''}
-- ⚛️ Componente: \`${data.hierarchy.map(h => h.name).join(' > ')}\`
+**Contexto del Codigo:**
+${data.source ? `- Archivo: \`${data.source.fileName}:${data.source.lineNumber}\`` : ''}
+- Componente: \`${data.hierarchy.map(h => h.name).join(' > ')}\`
 - Clases aplicadas: \`${data.classList.join(' ') || 'Ninguna'}\`
 
 **HTML Actual:**
@@ -74,7 +74,7 @@ ${data.source ? `- 📁 Archivo: \`${data.source.fileName}:${data.source.lineNum
 ${data.outerHTMLSnippet}
 \`\`\`
 
-**Objetivo de la refactorización:**
+**Objetivo de la refactorizacion:**
 ${userInstruction || 'Revisa este componente, simplifica su estructura, elimina redundancias en CSS/Tailwind y optimiza su legibilidad manteniendo su funcionalidad intacta.'}`;
     }
   },
@@ -84,9 +84,9 @@ ${userInstruction || 'Revisa este componente, simplifica su estructura, elimina 
     iconName: 'Palette',
     description: 'Transformar estilos CSS inline o tradicionales a clases utilitarias de Tailwind.',
     generatePrompt: (data: SelectedElementData, userInstruction?: string) => {
-      return `### 🎨 Tarea: Convertir / Optimizar a Tailwind CSS
+      return `### Tarea: Convertir / Optimizar a Tailwind CSS
 
-**Ubicación:** ${data.source ? `\`${data.source.fileName}:${data.source.lineNumber}\`` : 'Elemento DOM'}
+**Ubicacion:** ${data.source ? `\`${data.source.fileName}:${data.source.lineNumber}\`` : 'Elemento DOM'}
 **Estilos Computados Detectados:**
 - Dimensiones: ${data.computedStyles.width} x ${data.computedStyles.height}
 - Display / Flex: \`${data.computedStyles.display}\` ${data.computedStyles.flexDirection ? `(flex-dir: ${data.computedStyles.flexDirection})` : ''}
@@ -99,8 +99,8 @@ ${userInstruction || 'Revisa este componente, simplifica su estructura, elimina 
 ${data.outerHTMLSnippet}
 \`\`\`
 
-**Petición:**
-${userInstruction || 'Convierte los estilos de este elemento en clases utilitarias limpias y modernas de Tailwind CSS v3/v4.'}`;
+**Peticion:**
+${userInstruction || 'Convierte los estilos de este elemento en clases utilitarias limpias y modernas de Tailwind CSS.'}`;
     }
   },
   {
@@ -109,11 +109,11 @@ ${userInstruction || 'Convierte los estilos de este elemento en clases utilitari
     iconName: 'HelpCircle',
     description: 'Comprender qué hace el componente, cómo está construido y cómo modificarlo.',
     generatePrompt: (data: SelectedElementData, userInstruction?: string) => {
-      return `### 💡 Explicación de Componente UI
+      return `### Explicacion de Componente UI
 
 **Datos del elemento:**
 ${data.source ? `- Archivo: \`${data.source.fileName}:${data.source.lineNumber}\`` : ''}
-- Jerarquía: \`${data.hierarchy.map(h => h.name).join(' > ')}\`
+- Jerarquia: \`${data.hierarchy.map(h => h.name).join(' > ')}\`
 - Clases: \`${data.classList.join(' ')}\`
 
 **HTML:**
@@ -121,8 +121,8 @@ ${data.source ? `- Archivo: \`${data.source.fileName}:${data.source.lineNumber}\
 ${data.outerHTMLSnippet}
 \`\`\`
 
-**Pregunta del desarrollador:**
-${userInstruction || 'Explícame la estructura de este componente, cómo se relaciona con sus padres y cómo está estructurado su diseño.'}`;
+**Consulta del desarrollador:**
+${userInstruction || 'Explicame la estructura de este componente, como se relaciona con sus padres y como esta estructurado su diseño.'}`;
     }
   },
   {
@@ -131,21 +131,21 @@ ${userInstruction || 'Explícame la estructura de este componente, cómo se rela
     iconName: 'MessageSquare',
     description: 'Escribe tu propia instrucción con todo el contexto técnico ya incluido.',
     generatePrompt: (data: SelectedElementData, userInstruction?: string) => {
-      return `### 🤖 Instrucción para Asistente de IA
+      return `### Contexto del Componente UI
 
-**Contexto del elemento seleccionado en pantalla:**
-${data.source ? `- 📁 Archivo origen: \`${data.source.fileName}:${data.source.lineNumber}\` (${data.source.framework || 'Web'})` : ''}
-- ⚛️ Componente / Jerarquía: \`${data.hierarchy.map(h => h.name).join(' > ')}\`
-- 🏷️ Tag: \`<${data.tagName}>\` ${data.id ? `#${data.id}` : ''}
-- 🎨 Clases: \`${data.classList.join(' ') || 'none'}\`
+**Ubicacion:**
+${data.source ? `- Archivo origen: \`${data.source.fileName}:${data.source.lineNumber}\` (${data.source.framework || 'Web'})` : '- Inspeccionado directamente en el DOM'}
+- Componente / Jerarquia: \`${data.hierarchy.map(h => h.name).join(' > ')}\`
+- Tag: \`<${data.tagName}>\` ${data.id ? `#${data.id}` : ''}
+- Clases: \`${data.classList.join(' ') || 'none'}\`
 
 **Estructura HTML:**
 \`\`\`html
 ${data.outerHTMLSnippet}
 \`\`\`
 
-**Instrucción:**
-${userInstruction || 'Analiza este elemento y ayúdame con los cambios necesarios.'}`;
+**Instruccion:**
+${userInstruction || 'Analiza este elemento y ayudame con los cambios necesarios.'}`;
     }
   }
 ];
