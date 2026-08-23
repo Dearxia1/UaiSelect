@@ -11,7 +11,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSettings,
 }) => {
   const handleOpenDonate = () => {
-    window.open('https://ko-fi.com/dearxia1', '_blank');
+    window.open('https://ko-fi.com/danielmejiaruales', '_blank');
   };
 
   return (

@@ -4,7 +4,7 @@
 
 [![Chrome Extension](https://img.shields.io/badge/Chrome-Extension%20MV3-blue.svg?logo=google-chrome&logoColor=white)](https://developer.chrome.com/docs/extensions/mv3/)
 [![Firefox Addon](https://img.shields.io/badge/Firefox-WebExtension-orange.svg?logo=firefox&logoColor=white)](https://addons.mozilla.org/)
-[![Ko-fi](https://img.shields.io/badge/Ko--fi-Apoyar-ff5e5b.svg?logo=ko-fi&logoColor=white)](https://ko-fi.com/dearxia1)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Apoyar-ff5e5b.svg?logo=ko-fi&logoColor=white)](https://ko-fi.com/danielmejiaruales)
 [![React 19](https://img.shields.io/badge/React-19-61dafb.svg?logo=react&logoColor=black)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8.svg?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178c6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -81,7 +81,7 @@ $$\textbf{1 Clic en el elemento} \longrightarrow \textbf{La IA ya conoce el arch
 
 UaiSelect es un proyecto de código abierto y completamente gratuito. Si te ahorra tiempo en tu flujo de trabajo diario, puedes apoyar su desarrollo invitándome un café en Ko-fi:
 
-[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/dearxia1)
+[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/danielmejiaruales)
 
 ---
 
