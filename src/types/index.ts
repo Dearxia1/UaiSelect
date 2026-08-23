@@ -53,7 +53,12 @@ export interface SelectedElementData {
     bottom: number;
     right: number;
   };
-  screenshotUrl?: string; // Data URL of the cropped snapshot
+  viewport: {
+    width: number;
+    height: number;
+    devicePixelRatio: number;
+  };
+  screenshotUrl?: string; // Data URL of the snapshot
   url: string;
   pageTitle: string;
   timestamp: number;

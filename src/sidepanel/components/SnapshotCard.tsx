@@ -16,7 +16,7 @@ export const SnapshotCard: React.FC<SnapshotCardProps> = ({ elementData }) => {
     let isMounted = true;
     if (elementData.screenshotUrl) {
       setLoading(true);
-      cropElementScreenshot(elementData.screenshotUrl, elementData.rect)
+      cropElementScreenshot(elementData.screenshotUrl, elementData.rect, elementData.viewport)
         .then((url) => {
           if (isMounted) {
             setCroppedUrl(url);

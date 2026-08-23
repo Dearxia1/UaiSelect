@@ -6,27 +6,30 @@ import { SelectedElementData } from '../types';
 export async function cropElementScreenshot(
   fullDataUrl: string,
   rect: SelectedElementData['rect'],
+  viewport?: SelectedElementData['viewport'],
   padding = 12
 ): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
-      // Calculate scale factor in case of high-DPI / Retina displays
-      const dpr = window.devicePixelRatio || 1;
-      
       const naturalWidth = img.naturalWidth;
       const naturalHeight = img.naturalHeight;
-      const clientWidth = window.innerWidth;
-      const clientHeight = window.innerHeight;
 
-      const scaleX = naturalWidth / clientWidth || dpr;
-      const scaleY = naturalHeight / clientHeight || dpr;
+      // Use viewport from the target webpage where selection was made
+      const pageWidth = viewport?.width || (naturalWidth / (viewport?.devicePixelRatio || window.devicePixelRatio || 1));
+      const pageHeight = viewport?.height || (naturalHeight / (viewport?.devicePixelRatio || window.devicePixelRatio || 1));
 
-      // Calculate padded coordinates
-      const cropX = Math.max(0, (rect.left - padding) * scaleX);
-      const cropY = Math.max(0, (rect.top - padding) * scaleY);
-      const cropWidth = Math.min(naturalWidth - cropX, (rect.width + padding * 2) * scaleX);
-      const cropHeight = Math.min(naturalHeight - cropY, (rect.height + padding * 2) * scaleY);
+      const scaleX = naturalWidth / pageWidth;
+      const scaleY = naturalHeight / pageHeight;
+
+      // Calculate padded bounding box in image pixel coordinates
+      const cropX = Math.max(0, Math.floor((rect.left - padding) * scaleX));
+      const cropY = Math.max(0, Math.floor((rect.top - padding) * scaleY));
+      const cropRight = Math.min(naturalWidth, Math.ceil((rect.right + padding) * scaleX));
+      const cropBottom = Math.min(naturalHeight, Math.ceil((rect.bottom + padding) * scaleY));
+
+      const cropWidth = cropRight - cropX;
+      const cropHeight = cropBottom - cropY;
 
       if (cropWidth <= 0 || cropHeight <= 0) {
         resolve(fullDataUrl);

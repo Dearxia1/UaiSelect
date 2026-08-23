@@ -130,6 +130,11 @@ export function extractElementData(element: HTMLElement): SelectedElementData {
       bottom: Math.round(rect.bottom),
       right: Math.round(rect.right),
     },
+    viewport: {
+      width: window.innerWidth,
+      height: window.innerHeight,
+      devicePixelRatio: window.devicePixelRatio || 1,
+    },
     url: window.location.href,
     pageTitle: document.title,
     timestamp: Date.now(),
