@@ -1,14 +1,14 @@
 <div align="center">
 
-# 🎯 UaiSelect
+# UaiSelect
 
-**The AI UI Inspector & Prompt Generator for Modern Web Developers**
+**AI UI Inspector & Context Extractor for Web Developers**
 
-*Selecciona cualquier elemento visual en tu navegador y conecta tu código fuente directamente con la IA.*
+*Selecciona cualquier elemento visual en tu navegador y extrae su contexto de código fuente directamente para asistentes de IA.*
 
 [![Chrome Extension](https://img.shields.io/badge/Chrome-Extension%20MV3-blue.svg?logo=google-chrome&logoColor=white)](https://developer.chrome.com/docs/extensions/mv3/)
 [![Firefox Addon](https://img.shields.io/badge/Firefox-WebExtension-orange.svg?logo=firefox&logoColor=white)](https://addons.mozilla.org/)
-[![Ko-fi](https://img.shields.io/badge/Ko--fi-Apoyar%20Proyecto-ff5e5b.svg?logo=ko-fi&logoColor=white)](https://ko-fi.com/danielmejiaruales)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-ff5e5b.svg?logo=ko-fi&logoColor=white)](https://ko-fi.com/danielmejiaruales)
 [![React](https://img.shields.io/badge/React-19-61dafb.svg?logo=react&logoColor=black)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8.svg?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178c6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -18,66 +18,66 @@
 
 ---
 
-## ⚡ El Problema vs. La Solución
+## Flujo de Trabajo
 
-### ❌ Flujo Tradicional (Fricción y pérdida de tiempo)
+### Flujo Tradicional (DevTools)
 
 ```mermaid
 flowchart LR
-    A[Ver bug o diseño] --> B[Abrir DevTools F12]
-    B --> C[Buscar elemento en el DOM]
-    C --> D[Copiar HTML y clases]
-    D --> E[Buscar archivo en VS Code]
-    E --> F[Redactar prompt en la IA]
+    A[Detectar cambio o bug] --> B[Abrir DevTools F12]
+    B --> C[Inspeccionar elemento]
+    C --> D[Copiar HTML y estilos]
+    D --> E[Buscar archivo en el editor]
+    E --> F[Redactar prompt a la IA]
 ```
 
-### ✅ Con UaiSelect (1 Clic, flujo instantáneo)
+### Con UaiSelect
 
 ```mermaid
 flowchart LR
-    A[Alt + Shift + X] --> B[Clic en el elemento]
-    B --> C1[📁 Archivo y Línea: Header.tsx:42]
-    B --> C2[🎨 Clases Tailwind y CSS]
-    B --> C3[📸 Captura visual recortada]
-    B --> C4[🤖 Prompt estructurado / JSON]
+    A[Alt + Shift + X] --> B[Clic en elemento]
+    B --> C1[Archivo y Línea: Header.tsx:42]
+    B --> C2[Clases Tailwind y estilos]
+    B --> C3[Captura visual recortada]
+    B --> C4[Prompt estructurado / JSON]
     C1 & C2 & C3 & C4 --> D[ChatGPT / Claude / Cursor / Gemini]
 ```
 
 ---
 
-## ✨ Características Principales
+## Características
 
 | Característica | Descripción |
 | :--- | :--- |
-| 🎯 **Inspector Visual** | Overlay aislado con Shadow DOM. Muestra badges en tiempo real con nombre de componente, archivo y dimensiones. |
-| 📁 **Click-to-Source** | Detecta automáticamente la ubicación real del archivo (`src/components/Header.tsx:42`) mediante React Fiber (`_debugSource`) y Vite Inspector (`data-v-inspector`). |
-| 🚀 **Deep Linking IDE** | Botones de 1 clic para abrir el archivo directamente en **VS Code** (`vscode://`) o **Cursor** (`cursor://`). |
-| 🌳 **Jerarquía de Componentes** | Visualiza la ruta completa del componente (`App > DashboardLayout > Navbar > UserAvatar > button`). |
-| 🎨 **Extracción Tailwind & CSS** | Filtra clases utilitarias de Tailwind, detecta dimensiones, display/flex, padding, margin y paleta de colores. |
-| 📸 **Captura Recortada** | Genera una captura de pantalla nítida y ajustada al elemento considerando la escala y el DPR de la pantalla. |
-| 🤖 **Modo Dual: Prompts & JSON** | Genera prompts optimizados con presets (*Fix Visual*, *Feature*, *Refactor*, *Tailwind*, *Explain*) o exporta un payload **JSON estructurado** para APIs y agentes. |
-| 🔒 **100% Privado y Local** | Toda la extracción y procesamiento se realiza en tu máquina local. Ningún dato sale de tu navegador. |
+| **Inspector Visual** | Overlay aislado en Shadow DOM con detección en tiempo real de componente, archivo y métricas. |
+| **Click-to-Source** | Obtención del archivo y línea exacta (`src/components/Header.tsx:42`) mediante React Fiber (`_debugSource`) y Vite Inspector (`data-v-inspector`). |
+| **Integración con IDE** | Acceso directo en 1 clic a **VS Code** (`vscode://`) y **Cursor** (`cursor://`). |
+| **Jerarquía de Componentes** | Ruta del árbol de componentes (`App > DashboardLayout > Navbar > UserAvatar > button`). |
+| **Clases Tailwind & CSS** | Clasificación de clases utilitarias de Tailwind, dimensiones, padding, margin y paleta de colores. |
+| **Captura Visual Recortada** | Instantánea ajustada al elemento respetando la escala y el DPR de la pantalla. |
+| **Doble Formato: Prompt & JSON** | Generación de prompts en Markdown con presets técnicos o exportación en **JSON estructurado** para APIs y agentes. |
+| **Procesamiento 100% Local** | La extracción se ejecuta exclusivamente en el navegador local. |
 
 ---
 
-## 🏗️ Arquitectura Técnica
+## Arquitectura
 
 ```mermaid
 graph TD
-    subgraph Browser["🌐 Navegador Web (Página en Desarrollo)"]
-        CS["Content Script: Overlay & Mouse Tracker"]
+    subgraph Browser["Navegador Web (Página en Desarrollo)"]
+        CS["Content Script: Overlay & Tracker"]
         EXTR["Extractores: React Fiber / Vue / DOM Metadata"]
         CS --> EXTR
     end
 
-    subgraph Core["⚙️ UaiSelect Core (Manifest V3)"]
+    subgraph Core["UaiSelect Core (Manifest V3)"]
         SW["Background Service Worker"]
         CAP["Screen Capture Engine"]
         SW --> CAP
     end
 
-    subgraph UI["💻 Interfaz de Usuario"]
-        SP["Side Panel / Sidebar UI (React + Tailwind)"]
+    subgraph UI["Interfaz de Usuario"]
+        SP["Side Panel / Sidebar (React + Tailwind)"]
         PG["Prompt & JSON Generator"]
         SP --> PG
     end
@@ -90,9 +90,9 @@ graph TD
 
 ---
 
-## 📦 Instalación
+## Instalación
 
-### 🌐 Google Chrome / Brave / Microsoft Edge / Opera
+### Google Chrome / Brave / Microsoft Edge / Opera
 
 1. **Clonar e instalar dependencias:**
    ```bash
@@ -101,13 +101,13 @@ graph TD
    npm install
    npm run build
    ```
-2. Abre `chrome://extensions/` en tu navegador.
-3. Activa el **Modo de desarrollador** (arriba a la derecha).
+2. Accede a `chrome://extensions/` en tu navegador.
+3. Activa el **Modo de desarrollador** en la esquina superior derecha.
 4. Haz clic en **Cargar descomprimida** y selecciona la carpeta **`dist`**.
 
 ---
 
-### 🦊 Mozilla Firefox
+### Mozilla Firefox
 
 1. **Compilar el proyecto:**
    ```bash
@@ -119,36 +119,36 @@ graph TD
 
 ---
 
-## ⌨️ Atajos de Teclado
+## Atajos de Teclado
 
 | Atajo | Acción |
 | :--- | :--- |
 | <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>X</kbd> | Activar / Desactivar el inspector visual |
 | <kbd>Clic Izquierdo</kbd> | Seleccionar elemento y abrir panel lateral |
-| <kbd>↑</kbd> (Flecha Arriba) | Subir al elemento padre en el DOM |
-| <kbd>↓</kbd> (Flecha Abajo) | Bajar al primer elemento hijo |
+| <kbd>↑</kbd> (Flecha Arriba) | Seleccionar elemento padre en el DOM |
+| <kbd>↓</kbd> (Flecha Abajo) | Seleccionar primer elemento hijo |
 | <kbd>Esc</kbd> | Cancelar y salir del modo selección |
 
 ---
 
-## 🛠️ Scripts de Desarrollo
+## Scripts
 
 ```bash
-# Iniciar servidor de desarrollo
+# Servidor de desarrollo
 npm run dev
 
-# Compilar versiones para producción (Chrome en dist/ y Firefox en dist-firefox/)
+# Compilación de producción (Chrome en dist/ y Firefox en dist-firefox/)
 npm run build
 
-# Generar archivos .zip listos para subir a las tiendas oficiales
+# Empaquetado de archivos .zip para tiendas
 npm run package
 ```
 
 ---
 
-## ☕ Apoya el Proyecto
+## Apoyo
 
-UaiSelect es un proyecto 100% de código abierto y gratuito. Si te ayuda a ahorrar tiempo en tu día a día como desarrollador, puedes invitarme un café:
+UaiSelect es un proyecto de código abierto y de uso gratuito. Si te resulta útil en tu flujo de trabajo, puedes apoyar su desarrollo:
 
 <div align="center">
 
@@ -158,6 +158,6 @@ UaiSelect es un proyecto 100% de código abierto y gratuito. Si te ayuda a ahorr
 
 ---
 
-## 📄 Licencia
+## Licencia
 
-Este proyecto está bajo la Licencia MIT. Consulta el archivo [LICENSE](LICENSE) para más información.
+MIT License. Consulta el archivo [LICENSE](LICENSE) para más detalles.
