@@ -153,3 +153,69 @@ ${userInstruction || 'Analiza este elemento y ayúdame con los cambios necesario
 export function getTemplateById(id: PromptMode): PromptTemplate {
   return PROMPT_TEMPLATES.find((t) => t.id === id) || PROMPT_TEMPLATES[0];
 }
+
+/**
+ * Generates a clean, structured JSON payload of the element context
+ */
+export function generateElementJSON(data: SelectedElementData, userInstruction?: string): string {
+  const payload = {
+    $schema: "https://uaiselect.dev/schema/element-context.v1.json",
+    instruction: userInstruction?.trim() || "Review and update this component based on the provided context.",
+    source: data.source
+      ? {
+          file: data.source.fileName,
+          line: data.source.lineNumber,
+          column: data.source.columnNumber,
+          component: data.source.componentName,
+          framework: data.source.framework || "unknown",
+        }
+      : null,
+    component: {
+      tag: data.tagName,
+      id: data.id || undefined,
+      hierarchy: data.hierarchy.map((h) => ({
+        name: h.name,
+        tag: h.tag,
+        isCustomComponent: h.isCustomComponent,
+      })),
+      classes: {
+        tailwind: data.tailwindClasses,
+        custom: data.customClasses,
+        all: data.classList,
+      },
+    },
+    styles: {
+      dimensions: {
+        width: data.computedStyles.width,
+        height: data.computedStyles.height,
+      },
+      display: data.computedStyles.display,
+      position: data.computedStyles.position,
+      padding: data.computedStyles.padding,
+      margin: data.computedStyles.margin,
+      colors: {
+        text: data.computedStyles.color,
+        background: data.computedStyles.backgroundColor,
+      },
+      typography: {
+        fontSize: data.computedStyles.fontSize,
+        fontFamily: data.computedStyles.fontFamily,
+      },
+      border: {
+        style: data.computedStyles.border,
+        radius: data.computedStyles.borderRadius,
+      },
+    },
+    dom: {
+      outerHTML: data.outerHTMLSnippet,
+      innerText: data.innerTextSnippet || undefined,
+    },
+    meta: {
+      pageUrl: data.url,
+      pageTitle: data.pageTitle,
+      timestamp: new Date(data.timestamp).toISOString(),
+    },
+  };
+
+  return JSON.stringify(payload, null, 2);
+}
