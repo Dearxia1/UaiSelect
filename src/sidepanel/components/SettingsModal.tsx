@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Check, Laptop, ShieldCheck } from 'lucide-react';
+import { X, Check, Laptop, ShieldCheck, Coffee, Heart, ExternalLink } from 'lucide-react';
 import { AppSettings } from '../../types';
 
 interface SettingsModalProps {
@@ -36,6 +36,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         onClose();
       }, 1000);
     });
+  };
+
+  const handleOpenDonate = () => {
+    window.open('https://ko-fi.com/dearxia1', '_blank');
+  };
+
+  const handleOpenGithub = () => {
+    window.open('https://github.com/Dearxia1/UaiSelect', '_blank');
   };
 
   if (!isOpen) return null;
@@ -79,6 +87,33 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 Alt + Shift + X
               </kbd>
               <span className="text-slate-500 text-[11px]">para activar el selector</span>
+            </div>
+          </div>
+
+          {/* Support & Community */}
+          <div className="p-3 bg-amber-500/5 rounded-xl border border-amber-500/20 space-y-2">
+            <div className="flex items-center gap-1.5 text-amber-300 font-semibold text-[11px]">
+              <Heart className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+              <span>¿Te gusta UaiSelect?</span>
+            </div>
+            <p className="text-[11px] text-slate-400">
+              UaiSelect es 100% gratuito y open source. Puedes apoyar su desarrollo invitándome un café en Ko-fi.
+            </p>
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={handleOpenDonate}
+                className="flex-1 py-1.5 px-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Coffee className="w-3.5 h-3.5" />
+                <span>Apoyar en Ko-fi</span>
+              </button>
+              <button
+                onClick={handleOpenGithub}
+                className="py-1.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-medium text-[11px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-slate-700"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>GitHub</span>
+              </button>
             </div>
           </div>
 

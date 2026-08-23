@@ -1,5 +1,5 @@
 import React from 'react';
-import { Target, Settings as SettingsIcon, Sparkles } from 'lucide-react';
+import { Target, Settings as SettingsIcon, Sparkles, Coffee } from 'lucide-react';
 
 interface HeaderProps {
   onToggleInspector: () => void;
@@ -10,6 +10,10 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleInspector,
   onOpenSettings,
 }) => {
+  const handleOpenDonate = () => {
+    window.open('https://ko-fi.com/dearxia1', '_blank');
+  };
+
   return (
     <header className="flex items-center justify-between px-4 py-3 bg-slate-900/80 backdrop-blur border-b border-slate-800 sticky top-0 z-40">
       <div className="flex items-center gap-2.5">
@@ -27,7 +31,15 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
+        <button
+          onClick={handleOpenDonate}
+          className="p-1.5 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 rounded-md transition-colors cursor-pointer"
+          title="Invítame un café ☕ (Buy Me a Coffee)"
+        >
+          <Coffee className="w-4 h-4" />
+        </button>
+
         <button
           onClick={onToggleInspector}
           className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md text-xs font-semibold shadow-md shadow-indigo-600/25 transition-all active:scale-95 cursor-pointer"

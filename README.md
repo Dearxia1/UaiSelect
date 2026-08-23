@@ -4,6 +4,7 @@
 
 [![Chrome Extension](https://img.shields.io/badge/Chrome-Extension%20MV3-blue.svg?logo=google-chrome&logoColor=white)](https://developer.chrome.com/docs/extensions/mv3/)
 [![Firefox Addon](https://img.shields.io/badge/Firefox-WebExtension-orange.svg?logo=firefox&logoColor=white)](https://addons.mozilla.org/)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Apoyar-ff5e5b.svg?logo=ko-fi&logoColor=white)](https://ko-fi.com/dearxia1)
 [![React 19](https://img.shields.io/badge/React-19-61dafb.svg?logo=react&logoColor=black)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8.svg?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178c6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -31,14 +32,10 @@ $$\textbf{1 Clic en el elemento} \longrightarrow \textbf{La IA ya conoce el arch
 - 🎨 **Clases Tailwind & Estilos Computados**:
   - Filtra y destaca automáticamente todas las clases utilitarias de Tailwind.
   - Muestra dimensiones, display/flex, padding, margin, bordes y paleta de colores detectada.
-- 📸 **Captura Visual Recortada**: Toma una instantánea nítida del elemento seleccionado lista para IAs multimodales.
-- 📝 **Generador Inteligente de Prompts**:
-  - 🛠️ *Corregir Bug Visual / Estilos*
-  - ⚡ *Añadir Funcionalidad / Interactividad*
-  - 🧹 *Refactorizar / Limpiar Código*
-  - 🎨 *Convertir / Optimizar a Tailwind CSS*
-  - 💡 *Explicar Componente*
-  - 💬 *Prompt Personalizado*
+- 📸 **Captura Visual Recortada**: Toma una instantánea nítida y exacta del elemento seleccionado lista para IAs multimodales.
+- 📝 **Modo Doble: Prompts de IA & JSON Estructurado**:
+  - **Modo Prompt**: Presets listos para *Corregir Bug Visual*, *Añadir Funcionalidad*, *Refactorizar*, *Tailwind CSS*, *Explicar* o *Personalizado*.
+  - **Modo JSON**: Exporta un payload JSON limpio y estructurado con un clic o descárgalo para usarlo en agentes, Cursor Rules o APIs.
 - 🚀 **Acciones Rápidas**: Copia al portapapeles o abre directamente en ChatGPT, Claude o Gemini con un solo clic.
 - 🔒 **100% Local y Seguro**: Toda la extracción se ejecuta localmente en tu máquina. Ningún dato sale de tu navegador.
 
@@ -80,6 +77,14 @@ $$\textbf{1 Clic en el elemento} \longrightarrow \textbf{La IA ya conoce el arch
 
 ---
 
+## ☕ Apoya el Proyecto
+
+UaiSelect es un proyecto de código abierto y completamente gratuito. Si te ahorra tiempo en tu flujo de trabajo diario, puedes apoyar su desarrollo invitándome un café en Ko-fi:
+
+[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/dearxia1)
+
+---
+
 ## ⌨️ Atajos y Uso
 
 | Acción | Atajo / Método |
@@ -92,12 +97,15 @@ $$\textbf{1 Clic en el elemento} \longrightarrow \textbf{La IA ya conoce el arch
 
 ---
 
-## 🛠️ Tecnologías y Arquitectura
+## 📦 Empaquetado para Publicar en Tiendas
 
-- **Build Dual**: Genera automáticamente `dist/` (optimizado para Chrome MV3) y `dist-firefox/` (optimizado para Firefox Gecko sin advertencias).
-- **Frontend SidePanel & Popup**: React 19, TypeScript, Tailwind CSS, Lucide Icons.
-- **Build Tool**: Vite 6 con Rollup multi-target.
-- **Content Overlay**: Shadow DOM aislado para evitar colisiones con el CSS de tus proyectos.
+Para generar los archivos `.zip` listos para subir a la **Chrome Web Store** y **Firefox Add-ons**:
+```bash
+npm run package
+```
+Generará:
+- `releases/uaiselect-chrome.zip`
+- `releases/uaiselect-firefox.zip`
 
 ---
 
