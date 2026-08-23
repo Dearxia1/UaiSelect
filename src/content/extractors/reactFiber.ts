@@ -3,7 +3,7 @@ import { ComponentHierarchyNode, SourceLocation } from '../../types';
 let currentTargetId = 0;
 
 /**
- * Communicates synchronously with the main world script where React Fiber is accessible
+ * Communicates with the main world script where React Fiber and component data are accessible
  */
 export function queryMainWorldMetadata(element: HTMLElement): {
   source?: SourceLocation;
@@ -11,11 +11,12 @@ export function queryMainWorldMetadata(element: HTMLElement): {
 } {
   const targetId = `uai-${Date.now()}-${++currentTargetId}`;
   element.setAttribute('data-uaiselect-id', targetId);
+  (window as any).__UAISELECT_ACTIVE_TARGET__ = element;
 
   let result: { source?: SourceLocation; hierarchy: ComponentHierarchyNode[] } = { hierarchy: [] };
 
   const handler = (e: any) => {
-    if (e.detail?.targetId === targetId && e.detail.metadata) {
+    if (e.detail?.metadata) {
       result = e.detail.metadata;
     }
   };
@@ -32,6 +33,10 @@ export function queryMainWorldMetadata(element: HTMLElement): {
   element.removeAttribute('data-uaiselect-id');
   window.removeEventListener('UAISELECT_INSPECT_RES', handler as EventListener);
 
+  if (!result.source && (window as any).__UAISELECT_LAST_METADATA__) {
+    result = (window as any).__UAISELECT_LAST_METADATA__;
+  }
+
   return result;
 }
 
@@ -42,7 +47,6 @@ export function extractReactMetadata(element: HTMLElement): {
   source?: SourceLocation;
   hierarchy: ComponentHierarchyNode[];
 } {
-  // Query the main world script running inside the webpage context
   const mainWorldResult = queryMainWorldMetadata(element);
   if (mainWorldResult.source || (mainWorldResult.hierarchy && mainWorldResult.hierarchy.length > 0)) {
     return mainWorldResult;
