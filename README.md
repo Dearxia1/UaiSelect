@@ -3,6 +3,7 @@
 > **Selecciona cualquier elemento visual en tu navegador y conecta tu código fuente directamente con la IA en segundos.**
 
 [![Chrome Extension](https://img.shields.io/badge/Chrome-Extension%20MV3-blue.svg?logo=google-chrome&logoColor=white)](https://developer.chrome.com/docs/extensions/mv3/)
+[![Firefox Addon](https://img.shields.io/badge/Firefox-WebExtension-orange.svg?logo=firefox&logoColor=white)](https://addons.mozilla.org/)
 [![React 19](https://img.shields.io/badge/React-19-61dafb.svg?logo=react&logoColor=black)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8.svg?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178c6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -22,7 +23,7 @@ $$\textbf{1 Clic en el elemento} \longrightarrow \textbf{La IA ya conoce el arch
 ## ✨ Características Principales
 
 - 🖱️ **Selector Visual Interactivo**: Activa el inspector con `Alt + Shift + X` o desde el popup. Resalta cualquier elemento con overlay y badge de componentes en tiempo real.
-- 📁 **Click-to-Source (React / Vue / Vite)**:
+- 📁 **Click-to-Source (React / Vue / Vite / Svelte)**:
   - En **React**: Lee React Fiber (`_debugSource`) y te indica `src/components/Header.tsx:42`.
   - En **Vue / Nuxt / Vite**: Lee atributos de depuración `data-v-inspector`.
   - 🚀 **Botón 1-Clic para abrir en VS Code (`vscode://`) o Cursor (`cursor://`)**.
@@ -43,27 +44,36 @@ $$\textbf{1 Clic en el elemento} \longrightarrow \textbf{La IA ya conoce el arch
 
 ---
 
-## 📦 Instalación Rápida en Chrome / Brave / Edge
+## 📦 Instalación
+
+### 🌐 Opción A: En Google Chrome / Brave / Microsoft Edge / Opera
 
 1. **Clonar o descargar este repositorio**:
    ```bash
    git clone https://github.com/Dearxia1/UaiSelect.git
    cd UaiSelect
-   ```
-
-2. **Instalar dependencias y compilar**:
-   ```bash
    npm install
    npm run build
    ```
+2. Abre tu navegador y ve a `chrome://extensions/` (o `brave://extensions/` / `edge://extensions/`).
+3. Activa el interruptor **"Modo de desarrollador"** (arriba a la derecha).
+4. Haz clic en **"Cargar descomprimida"** (Load unpacked) y selecciona la carpeta **`dist`**.
 
-3. **Cargar la extensión en tu navegador**:
-   - Abre tu navegador y ve a `chrome://extensions/` (o `brave://extensions/` / `edge://extensions/`).
-   - Activa el interruptor de **Modo de desarrollador** (esquina superior derecha).
-   - Haz clic en **"Cargar descomprimida"** (Load unpacked).
-   - Selecciona la carpeta **`dist`** generada dentro de `UaiSelect`.
+---
 
-¡Listo! Ya verás el icono de **UaiSelect** en tu barra de herramientas.
+### 🦊 Opción B: En Mozilla Firefox
+
+1. **Compilar el proyecto**:
+   ```bash
+   npm run build
+   ```
+2. En Firefox, escribe en la barra de direcciones:
+   ```text
+   about:debugging#/runtime/this-firefox
+   ```
+3. Haz clic en el botón **"Cargar complemento temporal..."** (Load Temporary Add-on...).
+4. Selecciona el archivo **`dist/manifest.json`**.
+5. ¡Listo! UaiSelect aparecerá activo en tu barra de extensiones y panel lateral (`sidebarAction`).
 
 ---
 
@@ -81,17 +91,10 @@ $$\textbf{1 Clic en el elemento} \longrightarrow \textbf{La IA ya conoce el arch
 
 ## 🛠️ Tecnologías y Arquitectura
 
-- **Manifest**: Chrome Extensions Manifest V3 con SidePanel API.
+- **Cross-Browser**: Soporta Chrome (Manifest V3 SidePanel) y Firefox (Manifest V3 SidebarAction).
 - **Frontend SidePanel & Popup**: React 19, TypeScript, Tailwind CSS, Lucide Icons.
 - **Build Tool**: Vite 6 con Rollup multi-target.
 - **Content Overlay**: Shadow DOM aislado para evitar colisiones con el CSS de tus proyectos.
-
----
-
-## 👨‍💻 Scripts Disponibles
-
-- `npm run build`: Compila TypeScript y genera el bundle listo para producción en la carpeta `dist/`.
-- `npm run dev`: Inicia el servidor de desarrollo de Vite.
 
 ---
 

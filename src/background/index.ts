@@ -1,13 +1,37 @@
 import { ExtensionMessage, SelectedElementData } from '../types';
 
-// Configure side panel behavior on installation
+// Configure side panel behavior on installation (Chrome)
 chrome.runtime.onInstalled.addListener(() => {
   if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
-    chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => {
-      // Ignore if not supported in this browser version
-    });
+    chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => {});
   }
 });
+
+// Helper to open side panel / sidebar in Chrome or Firefox
+async function openSidebarPanel(tab?: chrome.tabs.Tab) {
+  // 1. Chrome SidePanel API
+  if (chrome.sidePanel && tab?.id) {
+    try {
+      await chrome.sidePanel.open({ tabId: tab.id });
+      return;
+    } catch {
+      if (tab.windowId) {
+        try {
+          await chrome.sidePanel.open({ windowId: tab.windowId });
+          return;
+        } catch {}
+      }
+    }
+  }
+
+  // 2. Firefox SidebarAction API
+  const firefoxBrowser = (globalThis as any).browser || (globalThis as any).chrome;
+  if (firefoxBrowser?.sidebarAction?.open) {
+    try {
+      await firefoxBrowser.sidebarAction.open();
+    } catch {}
+  }
+}
 
 // Handle keyboard shortcuts
 chrome.commands.onCommand.addListener(async (command) => {
@@ -64,21 +88,14 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
         chrome.runtime.sendMessage({
           type: 'ELEMENT_SELECTED',
           payload: data,
-        }).catch(() => {
-          // Side panel might not be open yet
-        });
+        }).catch(() => {});
 
-        // Open Side Panel automatically on selection if available
-        if (chrome.sidePanel && tab?.id) {
-          chrome.sidePanel.open({ tabId: tab.id }).catch(() => {
-            if (tab.windowId) {
-              chrome.sidePanel.open({ windowId: tab.windowId }).catch(() => {});
-            }
-          });
-        }
+        // Open Side Panel / Sidebar automatically on selection
+        openSidebarPanel(tab);
       });
     } else {
       chrome.storage.local.set({ lastSelectedElement: data });
+      openSidebarPanel(tab);
     }
 
     sendResponse({ received: true });

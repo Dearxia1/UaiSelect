@@ -26,14 +26,23 @@ const PopupApp: React.FC = () => {
 
   const handleOpenSidePanel = async () => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    
+    // Chrome SidePanel
     if (chrome.sidePanel && tab) {
       if (tab.id) {
         await chrome.sidePanel.open({ tabId: tab.id }).catch(() => {
           if (tab.windowId) chrome.sidePanel.open({ windowId: tab.windowId }).catch(() => {});
         });
       }
-      window.close();
     }
+
+    // Firefox SidebarAction
+    const firefoxBrowser = (globalThis as any).browser || (globalThis as any).chrome;
+    if (firefoxBrowser?.sidebarAction?.open) {
+      await firefoxBrowser.sidebarAction.open().catch(() => {});
+    }
+
+    window.close();
   };
 
   return (
@@ -67,7 +76,7 @@ const PopupApp: React.FC = () => {
         className="w-full py-2 px-3 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl text-xs font-medium border border-slate-800 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
       >
         <PanelRight className="w-3.5 h-3.5 text-indigo-400" />
-        <span>Abrir Side Panel</span>
+        <span>Abrir Side Panel / Barra Lateral</span>
       </button>
 
       <div className="text-[11px] text-slate-500 flex items-center justify-between pt-1 border-t border-slate-800/80">

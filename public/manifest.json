@@ -3,12 +3,20 @@
   "name": "UaiSelect - AI UI Inspector & Prompt Generator",
   "version": "1.0.0",
   "description": "Selecciona cualquier elemento en tu web, detecta su archivo fuente en React/Vue/Vite, copia clases Tailwind y genera prompts estructurados para IA.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "uaiselect@dearxia1.extension",
+      "strict_min_version": "109.0"
+    }
+  },
   "permissions": [
     "activeTab",
     "storage",
     "scripting",
-    "sidePanel",
     "tabs"
+  ],
+  "optional_permissions": [
+    "sidePanel"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -26,8 +34,19 @@
   "side_panel": {
     "default_path": "src/sidepanel/index.html"
   },
+  "sidebar_action": {
+    "default_panel": "src/sidepanel/index.html",
+    "default_title": "UaiSelect DevTools",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
   "background": {
     "service_worker": "background.js",
+    "scripts": ["background.js"],
     "type": "module"
   },
   "content_scripts": [
