@@ -48,6 +48,12 @@
       "run_at": "document_end"
     }
   ],
+  "web_accessible_resources": [
+    {
+      "resources": ["mainWorld.js", "logo.svg"],
+      "matches": ["<all_urls>"]
+    }
+  ],
   "commands": {
     "toggle-inspector": {
       "suggested_key": {

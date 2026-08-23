@@ -13,6 +13,7 @@ export default defineConfig({
         sidepanel: resolve(__dirname, 'src/sidepanel/index.html'),
         background: resolve(__dirname, 'src/background/index.ts'),
         content: resolve(__dirname, 'src/content/index.ts'),
+        mainWorld: resolve(__dirname, 'src/content/mainWorld.ts'),
       },
       output: {
         entryFileNames: (chunkInfo) => {
@@ -21,6 +22,9 @@ export default defineConfig({
           }
           if (chunkInfo.name === 'content') {
             return 'content.js';
+          }
+          if (chunkInfo.name === 'mainWorld') {
+            return 'mainWorld.js';
           }
           return 'assets/[name]-[hash].js';
         },
