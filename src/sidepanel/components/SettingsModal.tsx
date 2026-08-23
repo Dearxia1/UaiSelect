@@ -1,11 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { X, Check, Sliders, ShieldCheck, Coffee, Heart, ExternalLink } from 'lucide-react';
-import { AppSettings } from '../../types';
+import { X, Check, Sliders, ShieldCheck, Coffee, Heart, ExternalLink, Layout } from 'lucide-react';
+import { AppSettings, CardVisibilitySettings } from '../../types';
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSettingsUpdated?: (newSettings: AppSettings) => void;
 }
+
+const DEFAULT_CARDS: CardVisibilitySettings = {
+  showSource: true,
+  showHierarchy: true,
+  showSnapshot: true,
+  showStyles: true,
+  showPrompt: true,
+};
 
 const DEFAULT_SETTINGS: AppSettings = {
   defaultEditor: 'vscode',
@@ -14,16 +23,21 @@ const DEFAULT_SETTINGS: AppSettings = {
   theme: 'dark',
   highlightColor: '#ffffff',
   customPromptPrefix: '',
+  cards: DEFAULT_CARDS,
 };
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSettingsUpdated }) => {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     chrome.storage.local.get(['settings'], (res) => {
       if (res.settings) {
-        setSettings({ ...DEFAULT_SETTINGS, ...res.settings });
+        setSettings({
+          ...DEFAULT_SETTINGS,
+          ...res.settings,
+          cards: { ...DEFAULT_CARDS, ...(res.settings.cards || {}) },
+        });
       }
     });
   }, [isOpen]);
@@ -31,11 +45,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const handleSave = () => {
     chrome.storage.local.set({ settings }, () => {
       setSaved(true);
+      if (onSettingsUpdated) {
+        onSettingsUpdated(settings);
+      }
       setTimeout(() => {
         setSaved(false);
         onClose();
-      }, 800);
+      }, 700);
     });
+  };
+
+  const toggleCard = (cardKey: keyof CardVisibilitySettings) => {
+    setSettings((prev) => ({
+      ...prev,
+      cards: {
+        ...prev.cards,
+        [cardKey]: !prev.cards[cardKey],
+      },
+    }));
   };
 
   const handleOpenDonate = () => {
@@ -50,9 +77,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
   return (
     <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-150">
+      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-850 bg-black/60">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-850 bg-black/60 shrink-0">
           <div className="flex items-center gap-2">
             <div className="p-1 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-200">
               <Sliders className="w-3.5 h-3.5" />
@@ -68,8 +95,49 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           </button>
         </div>
 
-        {/* Body */}
-        <div className="p-4 space-y-3.5 text-xs">
+        {/* Body (Scrollable) */}
+        <div className="p-4 space-y-3.5 text-xs overflow-y-auto flex-1">
+          {/* Card Visibility / Modules Section */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5 text-zinc-300 font-medium text-[11px]">
+              <Layout className="w-3.5 h-3.5 text-zinc-400" />
+              <span>Módulos Visibles en el Panel</span>
+            </div>
+            <div className="bg-black/60 rounded-xl border border-zinc-850 p-2 space-y-1.5">
+              {[
+                { key: 'showSource', label: 'Ubicación de Código (Archivo:Línea)' },
+                { key: 'showHierarchy', label: 'Jerarquía de Componentes' },
+                { key: 'showSnapshot', label: 'Captura Visual Recortada' },
+                { key: 'showStyles', label: 'Clases Tailwind & Estilos' },
+                { key: 'showPrompt', label: 'Generador de Prompt & JSON' },
+              ].map((item) => {
+                const isChecked = settings.cards[item.key as keyof CardVisibilitySettings];
+                return (
+                  <div
+                    key={item.key}
+                    onClick={() => toggleCard(item.key as keyof CardVisibilitySettings)}
+                    className="flex items-center justify-between p-1.5 rounded-lg hover:bg-zinc-900/60 cursor-pointer transition-colors"
+                  >
+                    <span className="text-[11px] text-zinc-300 select-none">{item.label}</span>
+                    <div
+                      className={`w-7 h-4 rounded-full transition-colors relative flex items-center p-0.5 ${
+                        isChecked ? 'bg-white' : 'bg-zinc-800'
+                      }`}
+                    >
+                      <div
+                        className={`w-3 h-3 rounded-full transition-transform ${
+                          isChecked
+                            ? 'bg-black translate-x-3'
+                            : 'bg-zinc-500 translate-x-0'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Editor selection */}
           <div className="space-y-1.5">
             <label className="text-zinc-300 font-medium text-[11px] block">Editor de Código por Defecto</label>
@@ -131,7 +199,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-2.5 border-t border-zinc-850 bg-black/60 flex items-center justify-end gap-2">
+        <div className="px-4 py-2.5 border-t border-zinc-850 bg-black/60 flex items-center justify-end gap-2 shrink-0">
           <button
             onClick={onClose}
             className="px-3 py-1.5 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 text-xs font-medium transition-colors cursor-pointer"

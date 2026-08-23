@@ -74,13 +74,22 @@ export interface PromptTemplate {
   generatePrompt: (data: SelectedElementData, userInstruction?: string) => string;
 }
 
+export interface CardVisibilitySettings {
+  showSource: boolean;
+  showHierarchy: boolean;
+  showSnapshot: boolean;
+  showStyles: boolean;
+  showPrompt: boolean;
+}
+
 export interface AppSettings {
   defaultEditor: 'vscode' | 'cursor' | 'webstorm' | 'custom';
   customEditorScheme: string;
   autoCaptureScreenshot: boolean;
   theme: 'dark' | 'light' | 'system';
-  highlightColor: string; // e.g. '#6366f1'
+  highlightColor: string;
   customPromptPrefix: string;
+  cards: CardVisibilitySettings;
 }
 
 export type ExtensionMessage =

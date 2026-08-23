@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Target, Sparkles, MousePointerClick, Code2 } from 'lucide-react';
-import { ExtensionMessage, SelectedElementData } from '../types';
+import { AppSettings, CardVisibilitySettings, ExtensionMessage, SelectedElementData } from '../types';
 import { Header } from './components/Header';
 import { SourceCard } from './components/SourceCard';
 import { ComponentTree } from './components/ComponentTree';
@@ -9,19 +9,31 @@ import { SnapshotCard } from './components/SnapshotCard';
 import { PromptBox } from './components/PromptBox';
 import { SettingsModal } from './components/SettingsModal';
 
+const DEFAULT_CARDS: CardVisibilitySettings = {
+  showSource: true,
+  showHierarchy: true,
+  showSnapshot: true,
+  showStyles: true,
+  showPrompt: true,
+};
+
 export const App: React.FC = () => {
   const [selectedElement, setSelectedElement] = useState<SelectedElementData | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [defaultEditor, setDefaultEditor] = useState('vscode');
+  const [cardsVisibility, setCardsVisibility] = useState<CardVisibilitySettings>(DEFAULT_CARDS);
 
   useEffect(() => {
-    // 1. Load initial selected element from storage
+    // 1. Load initial selected element and settings from storage
     chrome.storage.local.get(['lastSelectedElement', 'settings'], (result) => {
       if (result.lastSelectedElement) {
         setSelectedElement(result.lastSelectedElement);
       }
       if (result.settings?.defaultEditor) {
         setDefaultEditor(result.settings.defaultEditor);
+      }
+      if (result.settings?.cards) {
+        setCardsVisibility({ ...DEFAULT_CARDS, ...result.settings.cards });
       }
     });
 
@@ -57,6 +69,15 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleSettingsUpdated = (newSettings: AppSettings) => {
+    if (newSettings.defaultEditor) {
+      setDefaultEditor(newSettings.defaultEditor);
+    }
+    if (newSettings.cards) {
+      setCardsVisibility({ ...DEFAULT_CARDS, ...newSettings.cards });
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-black text-zinc-100 antialiased font-sans">
       <Header
@@ -68,29 +89,37 @@ export const App: React.FC = () => {
         {selectedElement ? (
           <>
             {/* Source Code Location & Editor Launcher */}
-            <SourceCard
-              source={selectedElement.source}
-              tagName={selectedElement.tagName}
-              defaultEditor={defaultEditor}
-            />
+            {cardsVisibility.showSource && (
+              <SourceCard
+                source={selectedElement.source}
+                tagName={selectedElement.tagName}
+                defaultEditor={defaultEditor}
+              />
+            )}
 
             {/* Component Hierarchy */}
-            {selectedElement.hierarchy && selectedElement.hierarchy.length > 0 && (
+            {cardsVisibility.showHierarchy && selectedElement.hierarchy && selectedElement.hierarchy.length > 0 && (
               <ComponentTree hierarchy={selectedElement.hierarchy} />
             )}
 
             {/* Visual Snapshot */}
-            <SnapshotCard elementData={selectedElement} />
+            {cardsVisibility.showSnapshot && (
+              <SnapshotCard elementData={selectedElement} />
+            )}
 
             {/* Tailwind Classes & CSS Metrics */}
-            <StylesCard
-              tailwindClasses={selectedElement.tailwindClasses}
-              customClasses={selectedElement.customClasses}
-              computedStyles={selectedElement.computedStyles}
-            />
+            {cardsVisibility.showStyles && (
+              <StylesCard
+                tailwindClasses={selectedElement.tailwindClasses}
+                customClasses={selectedElement.customClasses}
+                computedStyles={selectedElement.computedStyles}
+              />
+            )}
 
-            {/* AI Prompt Generator */}
-            <PromptBox elementData={selectedElement} />
+            {/* AI Prompt Generator & JSON */}
+            {cardsVisibility.showPrompt && (
+              <PromptBox elementData={selectedElement} />
+            )}
           </>
         ) : (
           /* Clean Monochromatic Empty State */
@@ -145,6 +174,7 @@ export const App: React.FC = () => {
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+        onSettingsUpdated={handleSettingsUpdated}
       />
     </div>
   );
