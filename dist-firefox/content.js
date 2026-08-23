@@ -7,18 +7,18 @@ var w=Object.defineProperty;var x=(i,e,t)=>e in i?w(i,e,{enumerable:!0,configura
       }
       .uaiselect-highlight {
         position: fixed;
-        border: 2px solid #6366f1;
-        background: rgba(99, 102, 241, 0.12);
+        border: 1.5px solid #ffffff;
+        background: rgba(255, 255, 255, 0.08);
         border-radius: 4px;
-        box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.4), 0 4px 12px rgba(99, 102, 241, 0.25);
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.8), 0 4px 20px rgba(0, 0, 0, 0.5);
         pointer-events: none;
-        transition: all 0.08s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.06s cubic-bezier(0.4, 0, 0.2, 1);
         display: none;
         z-index: 2147483645;
       }
       .uaiselect-badge {
         position: fixed;
-        background: #0f172a;
+        background: #09090b;
         color: #ffffff;
         padding: 4px 8px;
         border-radius: 6px;
@@ -27,81 +27,83 @@ var w=Object.defineProperty;var x=(i,e,t)=>e in i?w(i,e,{enumerable:!0,configura
         display: none;
         align-items: center;
         gap: 6px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-        border: 1px solid #334155;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+        border: 1px solid #27272a;
         z-index: 2147483646;
         pointer-events: none;
         max-width: 380px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        transition: all 0.08s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.06s cubic-bezier(0.4, 0, 0.2, 1);
       }
       .uaiselect-badge-comp {
-        color: #818cf8;
+        color: #ffffff;
         font-weight: 700;
       }
       .uaiselect-badge-src {
-        color: #94a3b8;
+        color: #a1a1aa;
         font-size: 10px;
-        background: #1e293b;
+        background: #18181b;
         padding: 2px 5px;
         border-radius: 4px;
+        border: 1px solid #27272a;
         max-width: 180px;
         overflow: hidden;
         text-overflow: ellipsis;
       }
       .uaiselect-badge-dim {
-        color: #e2e8f0;
+        color: #71717a;
         font-size: 10px;
-        opacity: 0.8;
+        font-family: monospace;
       }
       .uaiselect-banner {
         position: fixed;
         bottom: 24px;
         left: 50%;
         transform: translateX(-50%);
-        background: rgba(15, 23, 42, 0.92);
-        backdrop-filter: blur(8px);
-        color: #f8fafc;
-        padding: 8px 18px;
+        background: rgba(9, 9, 11, 0.95);
+        backdrop-filter: blur(12px);
+        color: #f4f4f5;
+        padding: 7px 16px;
         border-radius: 9999px;
         font-size: 12px;
         display: flex;
         align-items: center;
         gap: 12px;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 0 1px #27272a;
         z-index: 2147483647;
         pointer-events: auto;
         animation: uaiselect-fade-in 0.2s ease-out;
       }
       .uaiselect-kbd {
-        background: #334155;
-        color: #e2e8f0;
+        background: #18181b;
+        color: #d4d4d8;
         padding: 2px 6px;
         border-radius: 4px;
         font-size: 10px;
-        font-weight: bold;
-        border: 1px solid #475569;
+        font-weight: 600;
+        border: 1px solid #3f3f46;
+        font-family: monospace;
       }
       .uaiselect-dot {
-        width: 8px;
-        height: 8px;
+        width: 7px;
+        height: 7px;
         border-radius: 50%;
-        background: #10b981;
-        box-shadow: 0 0 8px #10b981;
+        background: #ffffff;
+        box-shadow: 0 0 8px #ffffff;
       }
       @keyframes uaiselect-fade-in {
         from { opacity: 0; transform: translate(-50%, 10px); }
         to { opacity: 1; transform: translate(-50%, 0); }
       }
       @keyframes uaiselect-flash {
-        0% { background: rgba(99, 102, 241, 0.4); transform: scale(1); }
-        50% { background: rgba(99, 102, 241, 0.8); transform: scale(1.02); }
-        100% { background: rgba(99, 102, 241, 0.12); transform: scale(1); }
+        0% { background: rgba(255, 255, 255, 0.3); transform: scale(1); }
+        50% { background: rgba(255, 255, 255, 0.6); transform: scale(1.01); }
+        100% { background: rgba(255, 255, 255, 0.08); transform: scale(1); }
       }
       .uaiselect-flash-anim {
-        animation: uaiselect-flash 0.3s ease-out;
+        animation: uaiselect-flash 0.25s ease-out;
       }
     `,this.highlightBox=document.createElement("div"),this.highlightBox.className="uaiselect-highlight",this.badge=document.createElement("div"),this.badge.className="uaiselect-badge",this.banner=document.createElement("div"),this.banner.className="uaiselect-banner",this.banner.innerHTML=`
       <span class="uaiselect-dot"></span>

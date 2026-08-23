@@ -58,13 +58,13 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100 antialiased">
+    <div className="flex flex-col min-h-screen bg-black text-zinc-100 antialiased font-sans">
       <Header
         onToggleInspector={handleToggleInspector}
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
-      <main className="flex-1 p-3.5 space-y-3.5 overflow-y-auto max-w-md mx-auto w-full pb-8">
+      <main className="flex-1 p-3 space-y-3 overflow-y-auto max-w-md mx-auto w-full pb-8">
         {selectedElement ? (
           <>
             {/* Source Code Location & Editor Launcher */}
@@ -93,48 +93,48 @@ export const App: React.FC = () => {
             <PromptBox elementData={selectedElement} />
           </>
         ) : (
-          /* Empty State */
+          /* Clean Monochromatic Empty State */
           <div className="py-12 px-4 flex flex-col items-center justify-center text-center space-y-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-xl shadow-indigo-500/25 animate-pulse">
-              <MousePointerClick className="w-8 h-8 text-white" />
+            <div className="w-14 h-14 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-lg">
+              <MousePointerClick className="w-6 h-6 text-zinc-200" />
             </div>
 
-            <div className="space-y-1.5 max-w-xs">
-              <h2 className="text-base font-bold text-slate-100">
-                Selecciona cualquier elemento
+            <div className="space-y-1 max-w-xs">
+              <h2 className="text-sm font-semibold text-white">
+                Inspecciona cualquier elemento
               </h2>
-              <p className="text-xs text-slate-400">
-                Haz clic en el botón inferior o presiona <kbd className="px-1.5 py-0.5 bg-slate-800 text-indigo-300 rounded font-mono text-[11px] border border-slate-700">Alt+Shift+X</kbd> para activar el inspector visual.
+              <p className="text-xs text-zinc-400">
+                Presiona <kbd className="px-1.5 py-0.5 bg-zinc-900 text-zinc-200 rounded font-mono text-[10px] border border-zinc-800">Alt+Shift+X</kbd> o haz clic abajo para activar el selector.
               </p>
             </div>
 
             <button
               onClick={handleToggleInspector}
-              className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/30 transition-all active:scale-95 cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-zinc-200 text-black rounded-lg text-xs font-semibold shadow-sm transition-all active:scale-95 cursor-pointer"
             >
-              <Target className="w-4 h-4" />
+              <Target className="w-3.5 h-3.5" />
               <span>Activar Inspector Visual</span>
             </button>
 
             {/* Features Highlight */}
-            <div className="grid grid-cols-2 gap-2 w-full pt-6 text-left">
-              <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
-                <div className="flex items-center gap-1.5 text-indigo-400 text-xs font-semibold">
-                  <Code2 className="w-3.5 h-3.5" />
+            <div className="grid grid-cols-2 gap-2 w-full pt-4 text-left">
+              <div className="p-2.5 rounded-xl bg-zinc-950 border border-zinc-800/80 space-y-1">
+                <div className="flex items-center gap-1.5 text-zinc-200 text-xs font-semibold">
+                  <Code2 className="w-3.5 h-3.5 text-zinc-400" />
                   <span>Click-to-Source</span>
                 </div>
-                <p className="text-[11px] text-slate-500">
-                  Detecta archivo `.tsx` o `.vue` y línea exacta.
+                <p className="text-[10px] text-zinc-500">
+                  Detecta archivo `.tsx`/`.vue` y línea exacta.
                 </p>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
-                <div className="flex items-center gap-1.5 text-amber-400 text-xs font-semibold">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>AI Ready Prompts</span>
+              <div className="p-2.5 rounded-xl bg-zinc-950 border border-zinc-800/80 space-y-1">
+                <div className="flex items-center gap-1.5 text-zinc-200 text-xs font-semibold">
+                  <Sparkles className="w-3.5 h-3.5 text-zinc-400" />
+                  <span>AI Ready</span>
                 </div>
-                <p className="text-[11px] text-slate-500">
-                  Genera prompts estructurados con 1 clic.
+                <p className="text-[10px] text-zinc-500">
+                  Genera prompts y JSON estructurado.
                 </p>
               </div>
             </div>
