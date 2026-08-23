@@ -48,7 +48,7 @@ $$\textbf{1 Clic en el elemento} \longrightarrow \textbf{La IA ya conoce el arch
 
 ### 🌐 Opción A: En Google Chrome / Brave / Microsoft Edge / Opera
 
-1. **Clonar o descargar este repositorio**:
+1. **Clonar e instalar dependencias**:
    ```bash
    git clone https://github.com/Dearxia1/UaiSelect.git
    cd UaiSelect
@@ -56,7 +56,7 @@ $$\textbf{1 Clic en el elemento} \longrightarrow \textbf{La IA ya conoce el arch
    npm run build
    ```
 2. Abre tu navegador y ve a `chrome://extensions/` (o `brave://extensions/` / `edge://extensions/`).
-3. Activa el interruptor **"Modo de desarrollador"** (arriba a la derecha).
+3. Activa el **"Modo de desarrollador"** (arriba a la derecha).
 4. Haz clic en **"Cargar descomprimida"** (Load unpacked) y selecciona la carpeta **`dist`**.
 
 ---
@@ -72,8 +72,11 @@ $$\textbf{1 Clic en el elemento} \longrightarrow \textbf{La IA ya conoce el arch
    about:debugging#/runtime/this-firefox
    ```
 3. Haz clic en el botón **"Cargar complemento temporal..."** (Load Temporary Add-on...).
-4. Selecciona el archivo **`dist/manifest.json`**.
-5. ¡Listo! UaiSelect aparecerá activo en tu barra de extensiones y panel lateral (`sidebarAction`).
+4. Selecciona el archivo:
+   ```text
+   dist-firefox/manifest.json
+   ```
+5. ¡Listo! UaiSelect cargará con **0 advertencias** y con soporte nativo de la barra lateral (`sidebarAction`).
 
 ---
 
@@ -91,7 +94,7 @@ $$\textbf{1 Clic en el elemento} \longrightarrow \textbf{La IA ya conoce el arch
 
 ## 🛠️ Tecnologías y Arquitectura
 
-- **Cross-Browser**: Soporta Chrome (Manifest V3 SidePanel) y Firefox (Manifest V3 SidebarAction).
+- **Build Dual**: Genera automáticamente `dist/` (optimizado para Chrome MV3) y `dist-firefox/` (optimizado para Firefox Gecko sin advertencias).
 - **Frontend SidePanel & Popup**: React 19, TypeScript, Tailwind CSS, Lucide Icons.
 - **Build Tool**: Vite 6 con Rollup multi-target.
 - **Content Overlay**: Shadow DOM aislado para evitar colisiones con el CSS de tus proyectos.

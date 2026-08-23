@@ -1,0 +1,54 @@
+{
+  "manifest_version": 3,
+  "name": "UaiSelect - AI UI Inspector & Prompt Generator",
+  "version": "1.0.0",
+  "description": "Selecciona cualquier elemento en tu web, detecta su archivo fuente en React/Vue/Vite, copia clases Tailwind y genera prompts estructurados para IA.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting",
+    "sidePanel",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "src/popup/index.html",
+    "default_title": "UaiSelect DevTools",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "side_panel": {
+    "default_path": "src/sidepanel/index.html"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "commands": {
+    "toggle-inspector": {
+      "suggested_key": {
+        "default": "Alt+Shift+X"
+      },
+      "description": "Activar o desactivar el selector visual de UaiSelect"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  }
+}
