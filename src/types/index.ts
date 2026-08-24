@@ -113,6 +113,8 @@ export type ExtensionMessage =
   | { type: 'CAPTURE_TAB_RESPONSE'; screenshotUrl: string }
   | { type: 'CAPTURE_FULL_PAGE_REQUEST' }
   | { type: 'CAPTURE_FULL_PAGE_RESPONSE'; screenshotUrl: string }
+  | { type: 'CAPTURE_VIEWPORT_REQUEST' }
+  | { type: 'CAPTURE_VIEWPORT_RESPONSE'; screenshotUrl: string }
   | { type: 'CAPTURE_SLICE_REQUEST' }
   | { type: 'CAPTURE_SLICE_RESPONSE'; dataUrl: string }
   | { type: 'TAKE_SCREENSHOT' }

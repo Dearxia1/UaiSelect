@@ -33,26 +33,27 @@ async function openSidebarPanel(tab?: chrome.tabs.Tab) {
   }
 }
 
+// Helper to find the active tab across windows and side panels
+async function getActiveTab(): Promise<chrome.tabs.Tab | undefined> {
+  const tabsCurrent = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (tabsCurrent && tabsCurrent.length > 0 && tabsCurrent[0].id) {
+    return tabsCurrent[0];
+  }
+  const tabsFocused = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+  if (tabsFocused && tabsFocused.length > 0 && tabsFocused[0].id) {
+    return tabsFocused[0];
+  }
+  const allActive = await chrome.tabs.query({ active: true });
+  if (allActive && allActive.length > 0 && allActive[0].id) {
+    return allActive[0];
+  }
+  return undefined;
+}
+
 // Handle keyboard shortcuts
 chrome.commands.onCommand.addListener(async (command) => {
   if (command === 'toggle-inspector') {
-    let targetTab: chrome.tabs.Tab | undefined;
-
-    const tabsCurrent = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tabsCurrent && tabsCurrent.length > 0 && tabsCurrent[0].id) {
-      targetTab = tabsCurrent[0];
-    } else {
-      const tabsFocused = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-      if (tabsFocused && tabsFocused.length > 0 && tabsFocused[0].id) {
-        targetTab = tabsFocused[0];
-      } else {
-        const allActive = await chrome.tabs.query({ active: true });
-        if (allActive && allActive.length > 0 && allActive[0].id) {
-          targetTab = allActive[0];
-        }
-      }
-    }
-
+    const targetTab = await getActiveTab();
     if (!targetTab?.id) return;
 
     try {
@@ -145,27 +146,83 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
     return true;
   }
 
-  if (message.type === 'CAPTURE_FULL_PAGE_REQUEST') {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const activeTab = tabs[0];
-      if (activeTab?.id) {
-        chrome.tabs.sendMessage(activeTab.id, { type: 'DO_FULL_PAGE_CAPTURE' }, (res) => {
-          if (res && res.screenshotUrl) {
-            // Update lastSelectedElement fullPageScreenshotUrl
+  if (message.type === 'CAPTURE_VIEWPORT_REQUEST' || message.type === 'TAKE_SCREENSHOT') {
+    getActiveTab().then(async (activeTab) => {
+      const windowId = activeTab?.windowId;
+      if (windowId) {
+        chrome.tabs.captureVisibleTab(windowId, { format: 'png' }, (dataUrl) => {
+          const url = (!chrome.runtime.lastError && dataUrl) ? dataUrl : '';
+          if (url) {
             chrome.storage.local.get(['lastSelectedElement'], (storageRes) => {
               if (storageRes.lastSelectedElement) {
-                storageRes.lastSelectedElement.fullPageScreenshotUrl = res.screenshotUrl;
+                storageRes.lastSelectedElement.screenshotUrl = url;
                 chrome.storage.local.set({ lastSelectedElement: storageRes.lastSelectedElement });
+                chrome.runtime.sendMessage({
+                  type: 'ELEMENT_SELECTED',
+                  payload: storageRes.lastSelectedElement,
+                }).catch(() => {});
               }
             });
-            sendResponse({ screenshotUrl: res.screenshotUrl });
-          } else {
-            sendResponse({ screenshotUrl: '' });
           }
+          sendResponse({ screenshotUrl: url });
         });
       } else {
         sendResponse({ screenshotUrl: '' });
       }
+    }).catch(() => {
+      sendResponse({ screenshotUrl: '' });
+    });
+    return true;
+  }
+
+  if (message.type === 'CAPTURE_FULL_PAGE_REQUEST') {
+    getActiveTab().then(async (activeTab) => {
+      if (!activeTab?.id) {
+        sendResponse({ screenshotUrl: '' });
+        return;
+      }
+
+      const sendFullPageCapture = async () => {
+        return new Promise<string>((resolve) => {
+          chrome.tabs.sendMessage(activeTab.id!, { type: 'DO_FULL_PAGE_CAPTURE' }, (res) => {
+            if (chrome.runtime.lastError || !res?.screenshotUrl) {
+              resolve('');
+            } else {
+              resolve(res.screenshotUrl);
+            }
+          });
+        });
+      };
+
+      let screenshotUrl = await sendFullPageCapture();
+      if (!screenshotUrl) {
+        // Try injecting content.js if missing
+        try {
+          await chrome.scripting.executeScript({
+            target: { tabId: activeTab.id },
+            files: ['content.js'],
+          });
+          screenshotUrl = await sendFullPageCapture();
+        } catch {}
+      }
+
+      if (screenshotUrl) {
+        chrome.storage.local.get(['lastSelectedElement'], (storageRes) => {
+          if (storageRes.lastSelectedElement) {
+            storageRes.lastSelectedElement.fullPageScreenshotUrl = screenshotUrl;
+            chrome.storage.local.set({ lastSelectedElement: storageRes.lastSelectedElement });
+            chrome.runtime.sendMessage({
+              type: 'ELEMENT_SELECTED',
+              payload: storageRes.lastSelectedElement,
+            }).catch(() => {});
+          }
+        });
+        sendResponse({ screenshotUrl });
+      } else {
+        sendResponse({ screenshotUrl: '' });
+      }
+    }).catch(() => {
+      sendResponse({ screenshotUrl: '' });
     });
     return true;
   }

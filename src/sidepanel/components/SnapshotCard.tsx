@@ -10,13 +10,19 @@ interface SnapshotCardProps {
 export const SnapshotCard: React.FC<SnapshotCardProps> = ({ elementData }) => {
   const [viewMode, setViewMode] = useState<'crop' | 'fullPage' | 'viewport'>('crop');
   const [croppedUrl, setCroppedUrl] = useState<string | null>(null);
+  const [viewportUrl, setViewportUrl] = useState<string | null>(elementData.screenshotUrl || null);
   const [fullPageUrl, setFullPageUrl] = useState<string | null>(elementData.fullPageScreenshotUrl || null);
   const [loadingCrop, setLoadingCrop] = useState(false);
   const [loadingFullPage, setLoadingFullPage] = useState(false);
+  const [loadingViewport, setLoadingViewport] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
+    // Always sync state when elementData updates or when navigating to another element/page
+    setFullPageUrl(elementData.fullPageScreenshotUrl || null);
+    setViewportUrl(elementData.screenshotUrl || null);
+
     if (elementData.screenshotUrl) {
       setLoadingCrop(true);
       cropElementScreenshot(elementData.screenshotUrl, elementData.rect, elementData.viewport)
@@ -36,10 +42,6 @@ export const SnapshotCard: React.FC<SnapshotCardProps> = ({ elementData }) => {
       setCroppedUrl(null);
     }
 
-    if (elementData.fullPageScreenshotUrl) {
-      setFullPageUrl(elementData.fullPageScreenshotUrl);
-    }
-
     return () => {
       isMounted = false;
     };
@@ -56,10 +58,33 @@ export const SnapshotCard: React.FC<SnapshotCardProps> = ({ elementData }) => {
     });
   };
 
+  const handleCaptureViewport = () => {
+    setLoadingViewport(true);
+    chrome.runtime.sendMessage({ type: 'CAPTURE_VIEWPORT_REQUEST' }, (res) => {
+      setLoadingViewport(false);
+      if (res && res.screenshotUrl) {
+        setViewportUrl(res.screenshotUrl);
+        setViewMode('viewport');
+        if (elementData.rect) {
+          setLoadingCrop(true);
+          cropElementScreenshot(res.screenshotUrl, elementData.rect, elementData.viewport)
+            .then((url) => {
+              setCroppedUrl(url);
+              setLoadingCrop(false);
+            })
+            .catch(() => {
+              setCroppedUrl(res.screenshotUrl);
+              setLoadingCrop(false);
+            });
+        }
+      }
+    });
+  };
+
   const getActiveUrl = () => {
     if (viewMode === 'crop') return croppedUrl;
     if (viewMode === 'fullPage') return fullPageUrl;
-    return elementData.screenshotUrl;
+    return viewportUrl || elementData.screenshotUrl || null;
   };
 
   const activeUrl = getActiveUrl();
@@ -151,7 +176,12 @@ export const SnapshotCard: React.FC<SnapshotCardProps> = ({ elementData }) => {
         </button>
 
         <button
-          onClick={() => setViewMode('viewport')}
+          onClick={() => {
+            setViewMode('viewport');
+            if (!viewportUrl && !loadingViewport) {
+              handleCaptureViewport();
+            }
+          }}
           className={`flex-1 py-1 px-1.5 rounded-md transition-all flex items-center justify-center gap-1 cursor-pointer truncate ${
             viewMode === 'viewport'
               ? 'bg-zinc-800 text-white font-semibold shadow-sm'
@@ -177,6 +207,11 @@ export const SnapshotCard: React.FC<SnapshotCardProps> = ({ elementData }) => {
             <span className="font-medium text-zinc-300">Capturando toda la página web con scroll...</span>
             <span className="text-[10px] text-zinc-500">Uniendo secciones y limpiando navbars fijas</span>
           </div>
+        ) : loadingViewport && viewMode === 'viewport' ? (
+          <div className="text-xs text-zinc-400 flex flex-col items-center gap-2 py-6">
+            <div className="w-5 h-5 border-2 border-zinc-300 border-t-transparent rounded-full animate-spin" />
+            <span className="font-medium text-zinc-300">Capturando pantalla actual...</span>
+          </div>
         ) : viewMode === 'fullPage' && !fullPageUrl ? (
           <div className="text-xs text-zinc-400 flex flex-col items-center gap-2 py-4">
             <Globe className="w-6 h-6 text-zinc-600" />
@@ -192,6 +227,21 @@ export const SnapshotCard: React.FC<SnapshotCardProps> = ({ elementData }) => {
               <span>Capturar Toda la Web</span>
             </button>
           </div>
+        ) : viewMode === 'viewport' && !activeUrl ? (
+          <div className="text-xs text-zinc-400 flex flex-col items-center gap-2 py-4">
+            <Maximize2 className="w-6 h-6 text-zinc-600" />
+            <span className="text-zinc-300 font-medium">Captura de Pantalla Visible</span>
+            <p className="text-[10px] text-zinc-500 text-center max-w-[220px]">
+              Captura lo que se está viendo en pantalla en este momento.
+            </p>
+            <button
+              onClick={handleCaptureViewport}
+              className="mt-1 px-2.5 py-1 bg-white text-black font-semibold rounded-md hover:bg-zinc-200 text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Camera className="w-3 h-3" />
+              <span>Capturar Pantalla</span>
+            </button>
+          </div>
         ) : activeUrl ? (
           <div className="relative w-full flex flex-col items-center">
             <img
@@ -201,8 +251,8 @@ export const SnapshotCard: React.FC<SnapshotCardProps> = ({ elementData }) => {
                 viewMode === 'fullPage' ? 'max-h-64' : 'max-h-48'
               }`}
             />
-            {viewMode === 'fullPage' && (
-              <div className="w-full flex justify-end pt-1.5">
+            <div className="w-full flex justify-end pt-1.5 gap-2">
+              {viewMode === 'fullPage' && (
                 <button
                   onClick={handleCaptureFullPage}
                   className="text-[10px] text-zinc-500 hover:text-zinc-300 flex items-center gap-1 transition-colors cursor-pointer"
@@ -211,8 +261,18 @@ export const SnapshotCard: React.FC<SnapshotCardProps> = ({ elementData }) => {
                   <RefreshCw className="w-2.5 h-2.5" />
                   <span>Recapturar web</span>
                 </button>
-              </div>
-            )}
+              )}
+              {viewMode === 'viewport' && (
+                <button
+                  onClick={handleCaptureViewport}
+                  className="text-[10px] text-zinc-500 hover:text-zinc-300 flex items-center gap-1 transition-colors cursor-pointer"
+                  title="Actualizar y recapturar la pantalla visible actual"
+                >
+                  <RefreshCw className="w-2.5 h-2.5" />
+                  <span>Recapturar pantalla</span>
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           <div className="text-xs text-zinc-600 flex flex-col items-center gap-1 py-3">

@@ -1,6 +1,6 @@
-﻿import { getCurrentElement } from './bridge.js';
+import { getCurrentElement } from './bridge.js';
 import { generatePrompt } from './promptGenerator.js';
-import { exec } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import path from 'node:path';
 
 export function handleGetSelectedElement() {
@@ -142,6 +142,8 @@ export function handleGetStylesAndProps() {
   };
 }
 
+const ALLOWED_EDITORS = ['cursor', 'code', 'windsurf', 'vscodium', 'zed'] as const;
+
 export function handleOpenElementSource(args: { editor?: 'cursor' | 'code' | 'windsurf' }) {
   const element = getCurrentElement();
   if (!element?.source?.fileName) {
@@ -155,24 +157,41 @@ export function handleOpenElementSource(args: { editor?: 'cursor' | 'code' | 'wi
     };
   }
 
-  const editorCmd = args.editor || 'cursor';
+  const selectedEditor = ALLOWED_EDITORS.includes(args.editor as any) ? (args.editor as string) : 'cursor';
   const filePath = element.source.fileName;
-  const line = element.source.lineNumber || 1;
-  const col = element.source.columnNumber || 1;
+  const line = Math.max(1, parseInt(String(element.source.lineNumber), 10) || 1);
+  const col = Math.max(1, parseInt(String(element.source.columnNumber), 10) || 1);
 
-  const target = `${filePath}:${line}:${col}`;
-  exec(`${editorCmd} -g "${target}"`, (err) => {
-    if (err) {
-      // Fallback to code
-      exec(`code -g "${target}"`);
-    }
-  });
+  // Sanitize path against shell injections and path traversals
+  const cleanPath = path.normalize(filePath).replace(/[;&|`$><"']/g, '');
+  const target = `${cleanPath}:${line}:${col}`;
+
+  try {
+    const child = spawn(selectedEditor, ['-g', target], {
+      detached: true,
+      stdio: 'ignore',
+      shell: process.platform === 'win32',
+    });
+    child.unref();
+    child.on('error', () => {
+      if (selectedEditor !== 'code') {
+        const fallback = spawn('code', ['-g', target], {
+          detached: true,
+          stdio: 'ignore',
+          shell: process.platform === 'win32',
+        });
+        fallback.unref();
+      }
+    });
+  } catch (err: any) {
+    console.error('Error opening editor:', err);
+  }
 
   return {
     content: [
       {
         type: 'text',
-        text: `Opened ${filePath} at line ${line} in ${editorCmd}.`,
+        text: `Opened ${cleanPath} at line ${line} in ${selectedEditor}.`,
       },
     ],
   };

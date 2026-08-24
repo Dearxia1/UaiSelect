@@ -99,13 +99,28 @@ export function startLocalBridge(port = BRIDGE_PORT): Promise<http.Server> {
 
       if (url === '/api/element' && req.method === 'POST') {
         let body = '';
+        let tooLarge = false;
+
         req.on('data', (chunk) => {
           body += chunk;
+          // Protect against denial-of-service with payloads exceeding 25MB
+          if (body.length > 25 * 1024 * 1024) {
+            tooLarge = true;
+            res.writeHead(413, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Payload Too Large' }));
+            req.destroy();
+          }
         });
 
         req.on('end', () => {
+          if (tooLarge) return;
           try {
             const parsed = JSON.parse(body) as SelectedElementData;
+            if (!parsed || typeof parsed !== 'object' || typeof parsed.tagName !== 'string') {
+              res.writeHead(400, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'Invalid element payload format' }));
+              return;
+            }
             setCurrentElement(parsed);
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ success: true, timestamp: Date.now() }));

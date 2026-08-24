@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env node
+#!/usr/bin/env node
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
@@ -92,7 +92,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             editor: {
               type: 'string',
-              enum: ['cursor', 'code', 'windsurf'],
+              enum: ['cursor', 'code', 'windsurf', 'vscodium', 'zed'],
               description: 'The editor to open the file in (default: cursor)',
             },
           },
