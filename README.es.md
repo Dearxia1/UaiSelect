@@ -1,8 +1,7 @@
 <div align="center">
 
 <a href="https://github.com/Dearxia1/UaiSelect">
-  <img src="./public/logo-white.svg#gh-dark-mode-only" alt="UaiSelect Logo" width="320">
-  <img src="./public/logo-dark.svg#gh-light-mode-only" alt="UaiSelect Logo" width="320">
+  <img src="./public/logo-white.svg" alt="UaiSelect Logo" width="480">
 </a>
 
 ### *Inspector Visual de UI y Puente de Contexto para Desarrolladores*
