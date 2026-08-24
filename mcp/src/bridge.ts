@@ -82,7 +82,7 @@ export function startLocalBridge(port = BRIDGE_PORT): Promise<http.Server> {
           JSON.stringify({
             status: 'online',
             service: 'UaiSelect MCP Bridge',
-            version: '1.0.0',
+            version: '1.0.1',
             port,
             hasElement: currentElement !== null,
             timestamp: Date.now(),
