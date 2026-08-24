@@ -1,6 +1,6 @@
 {
   "name": "uaiselect",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "AI UI Element Selector Chrome Extension for Developers",
   "type": "module",
   "scripts": {

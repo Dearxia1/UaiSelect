@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "UaiSelect - AI UI Inspector & Prompt Generator",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Selecciona cualquier elemento en tu web, detecta su archivo fuente en React/Vue/Vite, copia clases Tailwind y genera prompts estructurados para IA.",
   "browser_specific_settings": {
     "gecko": {
