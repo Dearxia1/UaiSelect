@@ -7,7 +7,7 @@ export async function cropElementScreenshot(
   fullDataUrl: string,
   rect: SelectedElementData['rect'],
   viewport?: SelectedElementData['viewport'],
-  padding = 12
+  padding = 2
 ): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image();

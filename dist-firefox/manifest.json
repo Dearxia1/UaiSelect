@@ -44,12 +44,6 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["mainWorld.js"],
-      "world": "MAIN",
-      "run_at": "document_start"
-    },
-    {
-      "matches": ["<all_urls>"],
       "js": ["content.js"],
       "run_at": "document_end"
     }

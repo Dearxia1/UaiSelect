@@ -1,0 +1,47 @@
+{
+  "name": "uaiselect-mcp",
+  "version": "1.0.0",
+  "description": "Model Context Protocol (MCP) Server for UaiSelect - Connect your browser inspector to Cursor, Claude Code, Antigravity, and Windsurf",
+  "type": "module",
+  "bin": {
+    "uaiselect-mcp": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Dearxia1/UaiSelect.git",
+    "directory": "mcp"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "uaiselect",
+    "ai",
+    "cursor",
+    "claude",
+    "antigravity",
+    "devtools",
+    "react",
+    "vue"
+  ],
+  "author": "Dearxia1",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "typescript": "^5.7.3"
+  }
+}

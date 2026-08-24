@@ -6,12 +6,14 @@ interface SourceCardProps {
   source?: SourceLocation;
   tagName: string;
   defaultEditor?: string;
+  pageUrl?: string;
 }
 
 export const SourceCard: React.FC<SourceCardProps> = ({
   source,
   tagName,
   defaultEditor = 'vscode',
+  pageUrl,
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -29,6 +31,7 @@ export const SourceCard: React.FC<SourceCardProps> = ({
       type: 'OPEN_IN_EDITOR',
       source,
       editor: editorName,
+      pageUrl,
     });
   };
 
@@ -85,7 +88,12 @@ export const SourceCard: React.FC<SourceCardProps> = ({
       <div className="flex items-center gap-2 pt-1 border-t border-zinc-900">
         <button
           onClick={() => handleOpenEditor('vscode')}
-          className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-white rounded-lg text-[11px] font-medium transition-all active:scale-95 cursor-pointer border border-zinc-800"
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-[11px] font-medium transition-all active:scale-95 cursor-pointer border ${
+            defaultEditor === 'vscode'
+              ? 'bg-zinc-800 text-white border-zinc-700 font-semibold'
+              : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border-zinc-800'
+          }`}
+          title="Abrir en Visual Studio Code"
         >
           <ExternalLink className="w-3 h-3 text-zinc-400" />
           <span>VS Code</span>
@@ -93,10 +101,28 @@ export const SourceCard: React.FC<SourceCardProps> = ({
 
         <button
           onClick={() => handleOpenEditor('cursor')}
-          className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-white rounded-lg text-[11px] font-medium transition-all active:scale-95 cursor-pointer border border-zinc-800"
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-[11px] font-medium transition-all active:scale-95 cursor-pointer border ${
+            defaultEditor === 'cursor'
+              ? 'bg-zinc-800 text-white border-zinc-700 font-semibold'
+              : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border-zinc-800'
+          }`}
+          title="Abrir en Cursor IDE"
         >
           <ExternalLink className="w-3 h-3 text-zinc-400" />
           <span>Cursor</span>
+        </button>
+
+        <button
+          onClick={() => handleOpenEditor('webstorm')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-[11px] font-medium transition-all active:scale-95 cursor-pointer border ${
+            defaultEditor === 'webstorm'
+              ? 'bg-zinc-800 text-white border-zinc-700 font-semibold'
+              : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border-zinc-800'
+          }`}
+          title="Abrir en WebStorm"
+        >
+          <ExternalLink className="w-3 h-3 text-zinc-400" />
+          <span>WebStorm</span>
         </button>
       </div>
     </div>

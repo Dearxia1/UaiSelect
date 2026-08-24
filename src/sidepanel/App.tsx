@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Target, Sparkles, MousePointerClick, Code2 } from 'lucide-react';
+import { Target, Sparkles, MousePointerClick, Layers } from 'lucide-react';
 import { AppSettings, CardVisibilitySettings, ExtensionMessage, SelectedElementData } from '../types';
 import { Header } from './components/Header';
-import { SourceCard } from './components/SourceCard';
 import { ComponentTree } from './components/ComponentTree';
+import { StateCard } from './components/StateCard';
 import { StylesCard } from './components/StylesCard';
 import { SnapshotCard } from './components/SnapshotCard';
 import { PromptBox } from './components/PromptBox';
 import { SettingsModal } from './components/SettingsModal';
 
 const DEFAULT_CARDS: CardVisibilitySettings = {
-  showSource: true,
   showHierarchy: true,
   showSnapshot: true,
+  showState: true,
   showStyles: true,
   showPrompt: true,
 };
@@ -20,7 +20,6 @@ const DEFAULT_CARDS: CardVisibilitySettings = {
 export const App: React.FC = () => {
   const [selectedElement, setSelectedElement] = useState<SelectedElementData | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [defaultEditor, setDefaultEditor] = useState('vscode');
   const [cardsVisibility, setCardsVisibility] = useState<CardVisibilitySettings>(DEFAULT_CARDS);
 
   useEffect(() => {
@@ -28,9 +27,6 @@ export const App: React.FC = () => {
     chrome.storage.local.get(['lastSelectedElement', 'settings'], (result) => {
       if (result.lastSelectedElement) {
         setSelectedElement(result.lastSelectedElement);
-      }
-      if (result.settings?.defaultEditor) {
-        setDefaultEditor(result.settings.defaultEditor);
       }
       if (result.settings?.cards) {
         setCardsVisibility({ ...DEFAULT_CARDS, ...result.settings.cards });
@@ -53,16 +49,43 @@ export const App: React.FC = () => {
 
   const handleToggleInspector = async () => {
     try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab?.id) return;
+      let targetTab: chrome.tabs.Tab | undefined;
 
-      chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_INSPECTOR' }).catch(async () => {
-        // In case content script is not yet injected
-        await chrome.scripting.executeScript({
-          target: { tabId: tab.id! },
-          files: ['content.js'],
-        });
-        chrome.tabs.sendMessage(tab.id!, { type: 'TOGGLE_INSPECTOR' });
+      // 1. Try current window
+      const tabsCurrent = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tabsCurrent && tabsCurrent.length > 0 && tabsCurrent[0].id) {
+        targetTab = tabsCurrent[0];
+      }
+
+      // 2. Try last focused window (standard in Firefox Sidebar)
+      if (!targetTab) {
+        const tabsFocused = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+        if (tabsFocused && tabsFocused.length > 0 && tabsFocused[0].id) {
+          targetTab = tabsFocused[0];
+        }
+      }
+
+      // 3. Fallback: any active tab
+      if (!targetTab) {
+        const allActive = await chrome.tabs.query({ active: true });
+        if (allActive && allActive.length > 0 && allActive[0].id) {
+          targetTab = allActive[0];
+        }
+      }
+
+      if (!targetTab?.id) return;
+
+      chrome.tabs.sendMessage(targetTab.id, { type: 'TOGGLE_INSPECTOR' }).catch(async () => {
+        // In case content script is not yet injected into page
+        try {
+          await chrome.scripting.executeScript({
+            target: { tabId: targetTab!.id! },
+            files: ['content.js'],
+          });
+          chrome.tabs.sendMessage(targetTab!.id!, { type: 'TOGGLE_INSPECTOR' });
+        } catch (e) {
+          console.error('Error executing script:', e);
+        }
       });
     } catch (err) {
       console.error('Error toggling inspector:', err);
@@ -70,9 +93,6 @@ export const App: React.FC = () => {
   };
 
   const handleSettingsUpdated = (newSettings: AppSettings) => {
-    if (newSettings.defaultEditor) {
-      setDefaultEditor(newSettings.defaultEditor);
-    }
     if (newSettings.cards) {
       setCardsVisibility({ ...DEFAULT_CARDS, ...newSettings.cards });
     }
@@ -88,15 +108,6 @@ export const App: React.FC = () => {
       <main className="flex-1 p-3 space-y-3 overflow-y-auto max-w-md mx-auto w-full pb-8">
         {selectedElement ? (
           <>
-            {/* Source Code Location & Editor Launcher */}
-            {cardsVisibility.showSource && (
-              <SourceCard
-                source={selectedElement.source}
-                tagName={selectedElement.tagName}
-                defaultEditor={defaultEditor}
-              />
-            )}
-
             {/* Component Hierarchy */}
             {cardsVisibility.showHierarchy && selectedElement.hierarchy && selectedElement.hierarchy.length > 0 && (
               <ComponentTree hierarchy={selectedElement.hierarchy} />
@@ -114,6 +125,11 @@ export const App: React.FC = () => {
                 customClasses={selectedElement.customClasses}
                 computedStyles={selectedElement.computedStyles}
               />
+            )}
+
+            {/* Props, Local State & Event Handlers */}
+            {cardsVisibility.showState && (
+              <StateCard dataContext={selectedElement.dataContext} />
             )}
 
             {/* AI Prompt Generator & JSON */}
@@ -149,11 +165,11 @@ export const App: React.FC = () => {
             <div className="grid grid-cols-2 gap-2 w-full pt-4 text-left">
               <div className="p-2.5 rounded-xl bg-zinc-950 border border-zinc-800/80 space-y-1">
                 <div className="flex items-center gap-1.5 text-zinc-200 text-xs font-semibold">
-                  <Code2 className="w-3.5 h-3.5 text-zinc-400" />
-                  <span>Click-to-Source</span>
+                  <Layers className="w-3.5 h-3.5 text-zinc-400" />
+                  <span>Árbol UI</span>
                 </div>
                 <p className="text-[10px] text-zinc-500">
-                  Detecta archivo `.tsx`/`.vue` y línea exacta.
+                  Jerarquía completa de componentes y DOM.
                 </p>
               </div>
 

@@ -36,19 +36,35 @@ async function openSidebarPanel(tab?: chrome.tabs.Tab) {
 // Handle keyboard shortcuts
 chrome.commands.onCommand.addListener(async (command) => {
   if (command === 'toggle-inspector') {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab?.id) return;
+    let targetTab: chrome.tabs.Tab | undefined;
+
+    const tabsCurrent = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tabsCurrent && tabsCurrent.length > 0 && tabsCurrent[0].id) {
+      targetTab = tabsCurrent[0];
+    } else {
+      const tabsFocused = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+      if (tabsFocused && tabsFocused.length > 0 && tabsFocused[0].id) {
+        targetTab = tabsFocused[0];
+      } else {
+        const allActive = await chrome.tabs.query({ active: true });
+        if (allActive && allActive.length > 0 && allActive[0].id) {
+          targetTab = allActive[0];
+        }
+      }
+    }
+
+    if (!targetTab?.id) return;
 
     try {
-      await chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_INSPECTOR' });
+      await chrome.tabs.sendMessage(targetTab.id, { type: 'TOGGLE_INSPECTOR' });
     } catch {
       // Content script might not be injected yet into page
       try {
         await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
+          target: { tabId: targetTab.id },
           files: ['content.js'],
         });
-        await chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_INSPECTOR' });
+        await chrome.tabs.sendMessage(targetTab.id, { type: 'TOGGLE_INSPECTOR' });
       } catch (err) {
         console.error('Failed to inject or toggle inspector:', err);
       }
@@ -56,16 +72,12 @@ chrome.commands.onCommand.addListener(async (command) => {
   }
 });
 
-// Helper to open file in editor
-function openInEditor(fileName: string, lineNumber: number, editor = 'vscode') {
-  let scheme = 'vscode';
-  if (editor === 'cursor') scheme = 'cursor';
-  if (editor === 'webstorm') scheme = 'webstorm';
-
-  const cleanPath = fileName.replace(/^[a-zA-Z]+:\/\//, '');
-  const url = `${scheme}://file/${cleanPath}:${lineNumber}`;
-  
-  chrome.tabs.create({ url });
+function forwardToMcpBridge(data: SelectedElementData) {
+  fetch('http://127.0.0.1:42123/api/element', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }).catch(() => {});
 }
 
 // Handle runtime messages
@@ -74,40 +86,87 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
     const tab = sender.tab;
     const data: SelectedElementData = message.payload;
 
-    // Capture tab screenshot
-    if (tab?.windowId) {
-      chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' }, (dataUrl) => {
-        if (dataUrl && !chrome.runtime.lastError) {
-          data.screenshotUrl = dataUrl;
-        }
+    chrome.storage.local.get(['settings'], (res) => {
+      const autoCapture = res.settings?.autoCaptureScreenshot !== false;
 
-        // Store selected element
+      if (autoCapture && tab?.windowId) {
+        // 60ms delay ensures the visual overlay DOM is 100% hidden by compositor before capture
+        setTimeout(() => {
+          chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' }, (dataUrl) => {
+            if (dataUrl && !chrome.runtime.lastError) {
+              data.screenshotUrl = dataUrl;
+            }
+
+            // Store selected element
+            chrome.storage.local.set({ lastSelectedElement: data });
+
+            // Forward to MCP Bridge (Cursor, Claude, Antigravity, Windsurf)
+            forwardToMcpBridge(data);
+
+            // Forward to sidepanel or popup
+            chrome.runtime.sendMessage({
+              type: 'ELEMENT_SELECTED',
+              payload: data,
+            }).catch(() => {});
+
+            // Open Side Panel / Sidebar automatically on selection
+            openSidebarPanel(tab);
+          });
+        }, 60);
+      } else {
+        // Store selected element without screenshot
         chrome.storage.local.set({ lastSelectedElement: data });
 
-        // Forward to sidepanel or popup
+        // Forward to MCP Bridge
+        forwardToMcpBridge(data);
+
         chrome.runtime.sendMessage({
           type: 'ELEMENT_SELECTED',
           payload: data,
         }).catch(() => {});
 
-        // Open Side Panel / Sidebar automatically on selection
         openSidebarPanel(tab);
-      });
-    } else {
-      chrome.storage.local.set({ lastSelectedElement: data });
-      openSidebarPanel(tab);
-    }
+      }
+    });
 
     sendResponse({ received: true });
     return true;
   }
 
-  if (message.type === 'OPEN_IN_EDITOR') {
-    chrome.storage.local.get(['settings'], (res) => {
-      const editor = res.settings?.defaultEditor || 'vscode';
-      openInEditor(message.source.fileName, message.source.lineNumber, editor);
+  if (message.type === 'CAPTURE_SLICE_REQUEST') {
+    const windowId = sender.tab?.windowId;
+    if (windowId) {
+      chrome.tabs.captureVisibleTab(windowId, { format: 'png' }, (dataUrl) => {
+        sendResponse({ dataUrl: dataUrl || '' });
+      });
+    } else {
+      sendResponse({ dataUrl: '' });
+    }
+    return true;
+  }
+
+  if (message.type === 'CAPTURE_FULL_PAGE_REQUEST') {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const activeTab = tabs[0];
+      if (activeTab?.id) {
+        chrome.tabs.sendMessage(activeTab.id, { type: 'DO_FULL_PAGE_CAPTURE' }, (res) => {
+          if (res && res.screenshotUrl) {
+            // Update lastSelectedElement fullPageScreenshotUrl
+            chrome.storage.local.get(['lastSelectedElement'], (storageRes) => {
+              if (storageRes.lastSelectedElement) {
+                storageRes.lastSelectedElement.fullPageScreenshotUrl = res.screenshotUrl;
+                chrome.storage.local.set({ lastSelectedElement: storageRes.lastSelectedElement });
+              }
+            });
+            sendResponse({ screenshotUrl: res.screenshotUrl });
+          } else {
+            sendResponse({ screenshotUrl: '' });
+          }
+        });
+      } else {
+        sendResponse({ screenshotUrl: '' });
+      }
     });
-    sendResponse({ opened: true });
     return true;
   }
 

@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && node scripts/postbuild.js",
+    "build:mcp": "npm --prefix mcp run build",
+    "mcp": "node mcp/dist/index.js",
     "package": "npm run build && node scripts/package-extension.js",
     "preview": "vite preview"
   },
@@ -15,6 +17,8 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/plugin-transform-react-jsx-source": "^7.29.7",
     "@types/chrome": "^0.0.313",
     "@types/node": "^22.13.9",
     "@types/react": "^19.0.10",

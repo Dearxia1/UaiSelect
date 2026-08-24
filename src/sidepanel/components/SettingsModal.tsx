@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Check, Sliders, ShieldCheck, Coffee, Heart, ExternalLink, Layout } from 'lucide-react';
+import { X, Check, Sliders, ShieldCheck, Coffee, Heart, ExternalLink, Layout, Cpu, Copy } from 'lucide-react';
 import { AppSettings, CardVisibilitySettings } from '../../types';
 
 interface SettingsModalProps {
@@ -9,17 +9,16 @@ interface SettingsModalProps {
 }
 
 const DEFAULT_CARDS: CardVisibilitySettings = {
-  showSource: true,
   showHierarchy: true,
   showSnapshot: true,
+  showState: true,
   showStyles: true,
   showPrompt: true,
 };
 
 const DEFAULT_SETTINGS: AppSettings = {
-  defaultEditor: 'vscode',
-  customEditorScheme: 'vscode',
   autoCaptureScreenshot: true,
+  showFloatingBanner: true,
   theme: 'dark',
   highlightColor: '#ffffff',
   customPromptPrefix: '',
@@ -29,6 +28,8 @@ const DEFAULT_SETTINGS: AppSettings = {
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSettingsUpdated }) => {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [saved, setSaved] = useState(false);
+  const [mcpConnected, setMcpConnected] = useState(false);
+  const [copiedMcp, setCopiedMcp] = useState(false);
 
   useEffect(() => {
     chrome.storage.local.get(['settings'], (res) => {
@@ -40,7 +41,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
         });
       }
     });
+
+    // Check MCP status
+    if (isOpen) {
+      fetch('http://127.0.0.1:42123/api/status')
+        .then((res) => res.json())
+        .then((data) => setMcpConnected(data?.status === 'online'))
+        .catch(() => setMcpConnected(false));
+    }
   }, [isOpen]);
+
+  const handleCopyMcpConfig = async () => {
+    const config = {
+      mcpServers: {
+        uaiselect: {
+          command: "npx",
+          args: ["-y", "uaiselect-mcp"]
+        }
+      }
+    };
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(config, null, 2));
+      setCopiedMcp(true);
+      setTimeout(() => setCopiedMcp(false), 2000);
+    } catch {}
+  };
 
   const handleSave = () => {
     chrome.storage.local.set({ settings }, () => {
@@ -62,6 +87,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
         ...prev.cards,
         [cardKey]: !prev.cards[cardKey],
       },
+    }));
+  };
+
+  const toggleSetting = (settingKey: 'showFloatingBanner' | 'autoCaptureScreenshot') => {
+    setSettings((prev) => ({
+      ...prev,
+      [settingKey]: !prev[settingKey],
     }));
   };
 
@@ -97,6 +129,61 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
 
         {/* Body (Scrollable) */}
         <div className="p-4 space-y-3.5 text-xs overflow-y-auto flex-1">
+          {/* Inspector Overlay Behavior Section */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5 text-zinc-300 font-medium text-[11px]">
+              <Sliders className="w-3.5 h-3.5 text-zinc-400" />
+              <span>Comportamiento del Inspector</span>
+            </div>
+            <div className="bg-black/60 rounded-xl border border-zinc-850 p-2 space-y-1.5">
+              <div
+                onClick={() => toggleSetting('showFloatingBanner')}
+                className="flex items-center justify-between p-1.5 rounded-lg hover:bg-zinc-900/60 cursor-pointer transition-colors"
+              >
+                <div className="space-y-0.5">
+                  <span className="text-[11px] text-zinc-300 block select-none">Barra flotante inferior</span>
+                  <span className="text-[10px] text-zinc-500 block select-none">Muestra los atajos de teclado en pantalla</span>
+                </div>
+                <div
+                  className={`w-7 h-4 rounded-full transition-colors relative flex items-center p-0.5 shrink-0 ${
+                    settings.showFloatingBanner !== false ? 'bg-white' : 'bg-zinc-800'
+                  }`}
+                >
+                  <div
+                    className={`w-3 h-3 rounded-full transition-transform ${
+                      settings.showFloatingBanner !== false
+                        ? 'bg-black translate-x-3'
+                        : 'bg-zinc-500 translate-x-0'
+                    }`}
+                  />
+                </div>
+              </div>
+
+              <div
+                onClick={() => toggleSetting('autoCaptureScreenshot')}
+                className="flex items-center justify-between p-1.5 rounded-lg hover:bg-zinc-900/60 cursor-pointer transition-colors"
+              >
+                <div className="space-y-0.5">
+                  <span className="text-[11px] text-zinc-300 block select-none">Captura visual automática</span>
+                  <span className="text-[10px] text-zinc-500 block select-none">Toma foto del elemento al hacer clic</span>
+                </div>
+                <div
+                  className={`w-7 h-4 rounded-full transition-colors relative flex items-center p-0.5 shrink-0 ${
+                    settings.autoCaptureScreenshot !== false ? 'bg-white' : 'bg-zinc-800'
+                  }`}
+                >
+                  <div
+                    className={`w-3 h-3 rounded-full transition-transform ${
+                      settings.autoCaptureScreenshot !== false
+                        ? 'bg-black translate-x-3'
+                        : 'bg-zinc-500 translate-x-0'
+                    }`}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Card Visibility / Modules Section */}
           <div className="space-y-2">
             <div className="flex items-center gap-1.5 text-zinc-300 font-medium text-[11px]">
@@ -105,10 +192,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
             </div>
             <div className="bg-black/60 rounded-xl border border-zinc-850 p-2 space-y-1.5">
               {[
-                { key: 'showSource', label: 'Ubicación de Código (Archivo:Línea)' },
                 { key: 'showHierarchy', label: 'Jerarquía de Componentes' },
                 { key: 'showSnapshot', label: 'Captura Visual Recortada' },
                 { key: 'showStyles', label: 'Clases Tailwind & Estilos' },
+                { key: 'showState', label: 'Props, Estado & Eventos' },
                 { key: 'showPrompt', label: 'Generador de Prompt & JSON' },
               ].map((item) => {
                 const isChecked = settings.cards[item.key as keyof CardVisibilitySettings];
@@ -138,18 +225,40 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
             </div>
           </div>
 
-          {/* Editor selection */}
-          <div className="space-y-1.5">
-            <label className="text-zinc-300 font-medium text-[11px] block">Editor de Código por Defecto</label>
-            <select
-              value={settings.defaultEditor}
-              onChange={(e) => setSettings({ ...settings, defaultEditor: e.target.value as any })}
-              className="w-full bg-black border border-zinc-800 rounded-lg p-2 text-zinc-200 focus:outline-none focus:border-zinc-500 cursor-pointer font-sans text-xs"
-            >
-              <option value="vscode">Visual Studio Code (vscode://)</option>
-              <option value="cursor">Cursor IDE (cursor://)</option>
-              <option value="webstorm">WebStorm (webstorm://)</option>
-            </select>
+          {/* MCP Integration Section */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-[11px]">
+              <div className="flex items-center gap-1.5 text-zinc-300 font-medium">
+                <Cpu className="w-3.5 h-3.5 text-zinc-400" />
+                <span>Integración MCP (Cursor / Claude / Antigravity)</span>
+              </div>
+              <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono ${
+                mcpConnected ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-zinc-900 text-zinc-500 border border-zinc-800'
+              }`}>
+                {mcpConnected ? 'ONLINE :42123' : 'DESCONECTADO'}
+              </span>
+            </div>
+
+            <div className="bg-black/60 rounded-xl border border-zinc-850 p-2.5 space-y-2">
+              <p className="text-[10.5px] text-zinc-400 leading-relaxed">
+                Permite a tus agentes de IA en el IDE consultar directamente el elemento seleccionado en el navegador sin copiar prompts.
+              </p>
+
+              <div className="p-2 bg-zinc-950 rounded-lg border border-zinc-800 font-mono text-[10px] text-zinc-300 flex items-center justify-between">
+                <div className="truncate pr-2">
+                  <span className="text-zinc-500">$ </span>
+                  <span>npx -y uaiselect-mcp</span>
+                </div>
+                <button
+                  onClick={handleCopyMcpConfig}
+                  className="px-2 py-1 bg-zinc-850 hover:bg-zinc-800 text-zinc-200 rounded text-[10px] flex items-center gap-1 transition-colors shrink-0 cursor-pointer"
+                  title="Copiar configuración JSON para Cursor o Claude Desktop"
+                >
+                  {copiedMcp ? <Check className="w-3 h-3 text-zinc-100" /> : <Copy className="w-3 h-3" />}
+                  <span>{copiedMcp ? 'Copiado' : 'Copiar Config'}</span>
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Shortcut reminder */}

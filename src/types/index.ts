@@ -30,6 +30,17 @@ export interface ComponentHierarchyNode {
   isCustomComponent: boolean;
 }
 
+export interface ComponentEventData {
+  name: string; // e.g. onClick, onChange, onSubmit
+  handlerName?: string; // e.g. 'handleSubmit', 'anonymous', 'inline'
+}
+
+export interface ComponentDataContext {
+  props?: Record<string, any>;
+  state?: Record<string, any> | any[];
+  events?: ComponentEventData[];
+}
+
 export interface SelectedElementData {
   tagName: string;
   id: string;
@@ -43,6 +54,7 @@ export interface SelectedElementData {
   outerHTMLSnippet: string;
   innerTextSnippet: string;
   computedStyles: ComputedStyleSummary;
+  dataContext?: ComponentDataContext;
   rect: {
     x: number;
     y: number;
@@ -58,7 +70,8 @@ export interface SelectedElementData {
     height: number;
     devicePixelRatio: number;
   };
-  screenshotUrl?: string; // Data URL of the snapshot
+  screenshotUrl?: string; // Data URL of the visible viewport snapshot
+  fullPageScreenshotUrl?: string; // Data URL of the full scrollable page snapshot
   url: string;
   pageTitle: string;
   timestamp: number;
@@ -75,17 +88,16 @@ export interface PromptTemplate {
 }
 
 export interface CardVisibilitySettings {
-  showSource: boolean;
   showHierarchy: boolean;
   showSnapshot: boolean;
+  showState: boolean;
   showStyles: boolean;
   showPrompt: boolean;
 }
 
 export interface AppSettings {
-  defaultEditor: 'vscode' | 'cursor' | 'webstorm' | 'custom';
-  customEditorScheme: string;
   autoCaptureScreenshot: boolean;
+  showFloatingBanner: boolean;
   theme: 'dark' | 'light' | 'system';
   highlightColor: string;
   customPromptPrefix: string;
@@ -99,6 +111,11 @@ export type ExtensionMessage =
   | { type: 'ELEMENT_SELECTED'; payload: SelectedElementData }
   | { type: 'CAPTURE_TAB_REQUEST'; rect: SelectedElementData['rect'] }
   | { type: 'CAPTURE_TAB_RESPONSE'; screenshotUrl: string }
-  | { type: 'OPEN_IN_EDITOR'; source: SourceLocation }
+  | { type: 'CAPTURE_FULL_PAGE_REQUEST' }
+  | { type: 'CAPTURE_FULL_PAGE_RESPONSE'; screenshotUrl: string }
+  | { type: 'CAPTURE_SLICE_REQUEST' }
+  | { type: 'CAPTURE_SLICE_RESPONSE'; dataUrl: string }
+  | { type: 'TAKE_SCREENSHOT' }
+  | { type: 'SCREENSHOT_TAKEN'; screenshotUrl: string }
   | { type: 'GET_LAST_SELECTED' }
   | { type: 'LAST_SELECTED_RESPONSE'; payload: SelectedElementData | null };

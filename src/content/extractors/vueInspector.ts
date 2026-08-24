@@ -6,23 +6,28 @@ import { ComponentHierarchyNode, SourceLocation } from '../../types';
 function parseInspectorAttribute(value: string, framework: SourceLocation['framework']): SourceLocation | undefined {
   if (!value) return undefined;
   
-  // Format: "src/components/Button.vue:10:3" or "C:/project/src/App.vue:25:5"
+  // Format: "src/components/Button.vue:10:3" or "C:/project/src/App.vue:25:5" or "/@fs/C:/..."
   const parts = value.split(':');
   if (parts.length >= 2) {
-    let fileName = '';
+    let rawFileName = '';
     let lineNumber = 1;
     let columnNumber: number | undefined = undefined;
 
     // Handle Windows drive colon (e.g. C:/...)
     if (parts[0].length === 1 && parts.length >= 3) {
-      fileName = `${parts[0]}:${parts[1]}`;
+      rawFileName = `${parts[0]}:${parts[1]}`;
       lineNumber = parseInt(parts[2], 10) || 1;
       columnNumber = parts[3] ? parseInt(parts[3], 10) : undefined;
     } else {
-      fileName = parts[0];
+      rawFileName = parts[0];
       lineNumber = parseInt(parts[1], 10) || 1;
       columnNumber = parts[2] ? parseInt(parts[2], 10) : undefined;
     }
+
+    let fileName = rawFileName.replace(/\\/g, '/');
+    fileName = fileName.replace(/^\/@fs\//, '/');
+    fileName = fileName.replace(/\?.*$/, '');
+    fileName = fileName.replace(/^\/([a-zA-Z]:)/, '$1');
 
     const componentName = fileName.split('/').pop()?.replace(/\.[^.]+$/, '') || 'Component';
 

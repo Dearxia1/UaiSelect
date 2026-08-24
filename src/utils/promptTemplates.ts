@@ -1,4 +1,29 @@
-import { PromptMode, PromptTemplate, SelectedElementData } from '../types';
+import { ComponentDataContext, PromptMode, PromptTemplate, SelectedElementData } from '../types';
+
+function formatDataContextPrompt(dataContext?: ComponentDataContext): string {
+  if (!dataContext) return '';
+
+  const sections: string[] = [];
+
+  if (dataContext.props && Object.keys(dataContext.props).length > 0) {
+    sections.push(`- **Props detectadas:**\n\`\`\`json\n${JSON.stringify(dataContext.props, null, 2)}\n\`\`\``);
+  }
+
+  if (dataContext.state && (Array.isArray(dataContext.state) ? dataContext.state.length > 0 : Object.keys(dataContext.state).length > 0)) {
+    sections.push(`- **Estado / Hooks:**\n\`\`\`json\n${JSON.stringify(dataContext.state, null, 2)}\n\`\`\``);
+  }
+
+  if (dataContext.events && dataContext.events.length > 0) {
+    const eventLines = dataContext.events
+      .map((ev) => `  - \`${ev.name}\`: ${ev.handlerName ? `handler: \`${ev.handlerName}\`` : 'adjunto'}`)
+      .join('\n');
+    sections.push(`- **Event Listeners:**\n${eventLines}`);
+  }
+
+  if (sections.length === 0) return '';
+
+  return `\n**Lógica y Datos del Componente:**\n${sections.join('\n')}\n`;
+}
 
 export const PROMPT_TEMPLATES: PromptTemplate[] = [
   {
@@ -7,6 +32,7 @@ export const PROMPT_TEMPLATES: PromptTemplate[] = [
     iconName: 'Wrench',
     description: 'Ajustar alineación, espaciado, colores o comportamiento responsive.',
     generatePrompt: (data: SelectedElementData, userInstruction?: string) => {
+      const dataCtx = formatDataContextPrompt(data.dataContext);
       return `### Tarea: Corregir Estilos / Bug Visual
 
 **Ubicacion del Componente:**
@@ -20,7 +46,7 @@ ${data.customClasses.length > 0 ? `- Clases personalizadas: \`${data.customClass
 - Dimensiones: ${data.computedStyles.width} x ${data.computedStyles.height} (Display: \`${data.computedStyles.display}\`)
 - Margins: \`${data.computedStyles.margin}\` | Paddings: \`${data.computedStyles.padding}\`
 - Colores: Texto \`${data.computedStyles.color}\`, Fondo \`${data.computedStyles.backgroundColor}\`
-
+${dataCtx}
 **Fragmento HTML:**
 \`\`\`html
 ${data.outerHTMLSnippet}
@@ -38,13 +64,14 @@ Proporciona el codigo modificado directamente aplicable al archivo origen.`;
     iconName: 'Sparkles',
     description: 'Añadir eventos, estados, props o nueva lógica a este componente.',
     generatePrompt: (data: SelectedElementData, userInstruction?: string) => {
+      const dataCtx = formatDataContextPrompt(data.dataContext);
       return `### Tarea: Añadir Funcionalidad al Componente
 
 **Ubicacion en el Proyecto:**
 ${data.source ? `- Archivo: \`${data.source.fileName}:${data.source.lineNumber}\`` : '- Archivo: No detectado directamente'}
 - Componente: \`${data.hierarchy[data.hierarchy.length - 1]?.name || data.tagName}\`
 - Jerarquia completa: \`${data.hierarchy.map(h => h.name).join(' > ')}\`
-
+${dataCtx}
 **Estructura del Elemento:**
 \`\`\`html
 ${data.outerHTMLSnippet}
@@ -62,13 +89,14 @@ Indica exactamente en que archivo y lineas hacer los cambios con las mejores pra
     iconName: 'RefreshCw',
     description: 'Mejorar arquitectura, legibilidad, tipado TypeScript o separar en subcomponentes.',
     generatePrompt: (data: SelectedElementData, userInstruction?: string) => {
+      const dataCtx = formatDataContextPrompt(data.dataContext);
       return `### Tarea: Refactorizacion y Limpieza de Codigo
 
 **Contexto del Codigo:**
 ${data.source ? `- Archivo: \`${data.source.fileName}:${data.source.lineNumber}\`` : ''}
 - Componente: \`${data.hierarchy.map(h => h.name).join(' > ')}\`
 - Clases aplicadas: \`${data.classList.join(' ') || 'Ninguna'}\`
-
+${dataCtx}
 **HTML Actual:**
 \`\`\`html
 ${data.outerHTMLSnippet}
@@ -109,13 +137,14 @@ ${userInstruction || 'Convierte los estilos de este elemento en clases utilitari
     iconName: 'HelpCircle',
     description: 'Comprender qué hace el componente, cómo está construido y cómo modificarlo.',
     generatePrompt: (data: SelectedElementData, userInstruction?: string) => {
+      const dataCtx = formatDataContextPrompt(data.dataContext);
       return `### Explicacion de Componente UI
 
 **Datos del elemento:**
 ${data.source ? `- Archivo: \`${data.source.fileName}:${data.source.lineNumber}\`` : ''}
 - Jerarquia: \`${data.hierarchy.map(h => h.name).join(' > ')}\`
 - Clases: \`${data.classList.join(' ')}\`
-
+${dataCtx}
 **HTML:**
 \`\`\`html
 ${data.outerHTMLSnippet}
@@ -131,6 +160,7 @@ ${userInstruction || 'Explicame la estructura de este componente, como se relaci
     iconName: 'MessageSquare',
     description: 'Escribe tu propia instrucción con todo el contexto técnico ya incluido.',
     generatePrompt: (data: SelectedElementData, userInstruction?: string) => {
+      const dataCtx = formatDataContextPrompt(data.dataContext);
       return `### Contexto del Componente UI
 
 **Ubicacion:**
@@ -138,7 +168,7 @@ ${data.source ? `- Archivo origen: \`${data.source.fileName}:${data.source.lineN
 - Componente / Jerarquia: \`${data.hierarchy.map(h => h.name).join(' > ')}\`
 - Tag: \`<${data.tagName}>\` ${data.id ? `#${data.id}` : ''}
 - Clases: \`${data.classList.join(' ') || 'none'}\`
-
+${dataCtx}
 **Estructura HTML:**
 \`\`\`html
 ${data.outerHTMLSnippet}
@@ -183,6 +213,13 @@ export function generateElementJSON(data: SelectedElementData, userInstruction?:
         custom: data.customClasses,
         all: data.classList,
       },
+      dataContext: data.dataContext
+        ? {
+            props: data.dataContext.props || undefined,
+            state: data.dataContext.state || undefined,
+            events: data.dataContext.events || undefined,
+          }
+        : undefined,
     },
     styles: {
       dimensions: {
@@ -219,3 +256,5 @@ export function generateElementJSON(data: SelectedElementData, userInstruction?:
 
   return JSON.stringify(payload, null, 2);
 }
+
+
