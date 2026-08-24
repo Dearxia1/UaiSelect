@@ -115,8 +115,14 @@ El paquete `uaiselect-mcp` se ejecuta directamente vía `npx` y expone 5 herrami
 ## 📦 Instalación de la Extensión en el Navegador
 
 ### 🦊 Mozilla Firefox
-Instalación en 1 clic desde la tienda oficial:
-* **[Instalar UaiSelect en Firefox Add-ons](https://addons.mozilla.org/)**
+
+#### 1. Tienda Oficial (Instalación en 1 Clic)
+* **[Instalar UaiSelect en Firefox Add-ons](https://addons.mozilla.org/)** *(En proceso de aprobación)*
+
+#### 2. Instalación Manual / Modo Desarrollador (Local)
+1. En Firefox, entra a la dirección `about:debugging#/runtime/this-firefox`
+2. Haz clic en el botón **"Cargar complemento temporal..."**
+3. Selecciona el archivo `dist-firefox/manifest.json` dentro de tu carpeta del proyecto.
 
 ---
 
@@ -130,7 +136,7 @@ npm install
 npm run build
 
 # 2. En Chrome, abre chrome://extensions
-# 3. Activa "Modo de desarrollador" (esquina superior derecha)
+# 3. Activa "Modo de desarrollador" (interruptor superior derecho)
 # 4. Haz clic en "Cargar descomprimida" y selecciona la carpeta "dist"
 ```
 

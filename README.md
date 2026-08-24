@@ -115,8 +115,14 @@ The `uaiselect-mcp` package runs directly via `npx` and exposes 5 tools:
 ## 📦 Browser Extension Installation
 
 ### 🦊 Mozilla Firefox
-Install with 1 click from the official store:
-* **[Get UaiSelect on Firefox Add-ons](https://addons.mozilla.org/)**
+
+#### 1. Official Store (1-Click Install)
+* **[Get UaiSelect on Firefox Add-ons](https://addons.mozilla.org/)** *(Awaiting approval)*
+
+#### 2. Manual / Developer Mode (Local)
+1. In Firefox, navigate to `about:debugging#/runtime/this-firefox`
+2. Click **"Load Temporary Add-on..."**
+3. Select the `dist-firefox/manifest.json` file inside your cloned repository.
 
 ---
 
@@ -130,7 +136,7 @@ npm install
 npm run build
 
 # 2. In Chrome, open chrome://extensions
-# 3. Enable "Developer mode" (top right)
+# 3. Enable "Developer mode" (top right toggle)
 # 4. Click "Load unpacked" and select the "dist" folder
 ```
 
