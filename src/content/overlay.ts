@@ -178,13 +178,31 @@ export class UaiSelectOverlay {
 
     this.banner = document.createElement('div');
     this.banner.className = 'uaiselect-banner';
-    this.banner.innerHTML = `
-      <span class="uaiselect-dot"></span>
-      <strong>UaiSelect Inspector</strong>
-      <span>Clic para capturar</span>
-      <span><span class="uaiselect-kbd">↑ / ↓</span> Cambiar nivel</span>
-      <span><span class="uaiselect-kbd">Esc</span> Salir</span>
-    `;
+
+    const dot = document.createElement('span');
+    dot.className = 'uaiselect-dot';
+
+    const strongTitle = document.createElement('strong');
+    strongTitle.textContent = 'UaiSelect Inspector';
+
+    const spanClick = document.createElement('span');
+    spanClick.textContent = 'Clic para capturar';
+
+    const spanNav = document.createElement('span');
+    const kbdNav = document.createElement('span');
+    kbdNav.className = 'uaiselect-kbd';
+    kbdNav.textContent = '↑ / ↓';
+    spanNav.appendChild(kbdNav);
+    spanNav.appendChild(document.createTextNode(' Cambiar nivel'));
+
+    const spanEsc = document.createElement('span');
+    const kbdEsc = document.createElement('span');
+    kbdEsc.className = 'uaiselect-kbd';
+    kbdEsc.textContent = 'Esc';
+    spanEsc.appendChild(kbdEsc);
+    spanEsc.appendChild(document.createTextNode(' Salir'));
+
+    this.banner.replaceChildren(dot, strongTitle, spanClick, spanNav, spanEsc);
 
     this.shadowRoot.appendChild(style);
     this.shadowRoot.appendChild(this.highlightBox);
@@ -312,11 +330,25 @@ export class UaiSelectOverlay {
     const sourceText = data.source ? `${data.source.fileName.split('/').pop()}:${data.source.lineNumber}` : '';
     const dims = `${Math.round(rect.width)} × ${Math.round(rect.height)}`;
 
-    this.badge.innerHTML = `
-      <span class="uaiselect-badge-comp">${compName}</span>
-      ${sourceText ? `<span class="uaiselect-badge-src">${sourceText}</span>` : ''}
-      <span class="uaiselect-badge-dim">${dims}</span>
-    `;
+    const compSpan = document.createElement('span');
+    compSpan.className = 'uaiselect-badge-comp';
+    compSpan.textContent = compName;
+
+    const badgeNodes: Node[] = [compSpan];
+
+    if (sourceText) {
+      const srcSpan = document.createElement('span');
+      srcSpan.className = 'uaiselect-badge-src';
+      srcSpan.textContent = sourceText;
+      badgeNodes.push(srcSpan);
+    }
+
+    const dimSpan = document.createElement('span');
+    dimSpan.className = 'uaiselect-badge-dim';
+    dimSpan.textContent = dims;
+    badgeNodes.push(dimSpan);
+
+    this.badge.replaceChildren(...badgeNodes);
 
     this.badge.style.display = 'flex';
     

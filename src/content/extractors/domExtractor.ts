@@ -60,7 +60,7 @@ export function getCleanHTMLSnippet(element: HTMLElement, maxDepth = 2): {
 
   function prune(node: HTMLElement, currentDepth: number) {
     if (currentDepth >= maxDepth && node.children.length > 0) {
-      node.innerHTML = `<!-- ... ${node.children.length} child elements truncated ... -->`;
+      node.textContent = `<!-- ... ${node.children.length} child elements truncated ... -->`;
       return;
     }
     for (let i = 0; i < node.children.length; i++) {

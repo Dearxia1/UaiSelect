@@ -28,19 +28,23 @@ const PopupApp: React.FC = () => {
   const handleOpenSidePanel = async () => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     
-    // Chrome SidePanel
-    if (chrome.sidePanel && tab) {
-      if (tab.id) {
-        await chrome.sidePanel.open({ tabId: tab.id }).catch(() => {
-          if (tab.windowId) chrome.sidePanel.open({ windowId: tab.windowId }).catch(() => {});
-        });
-      }
-    }
-
     // Firefox SidebarAction
-    const firefoxBrowser = (globalThis as any).browser || (globalThis as any).chrome;
+    const firefoxBrowser = (globalThis as any).browser;
     if (firefoxBrowser?.sidebarAction?.open) {
       await firefoxBrowser.sidebarAction.open().catch(() => {});
+      window.close();
+      return;
+    }
+
+    // Chrome SidePanel
+    const browserApi = (globalThis as any).chrome;
+    const sidePanelApi = browserApi ? browserApi['sidePanel'] : undefined;
+    if (sidePanelApi && typeof sidePanelApi.open === 'function' && tab) {
+      if (tab.id) {
+        await sidePanelApi.open({ tabId: tab.id }).catch(() => {
+          if (tab.windowId) sidePanelApi.open({ windowId: tab.windowId }).catch(() => {});
+        });
+      }
     }
 
     window.close();

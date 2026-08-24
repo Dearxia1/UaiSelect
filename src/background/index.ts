@@ -2,34 +2,39 @@ import { ExtensionMessage, SelectedElementData } from '../types';
 
 // Configure side panel behavior on installation (Chrome)
 chrome.runtime.onInstalled.addListener(() => {
-  if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
-    chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => {});
+  const browserApi = (globalThis as any).chrome;
+  const sidePanelApi = browserApi ? browserApi['sidePanel'] : undefined;
+  if (sidePanelApi && typeof sidePanelApi.setPanelBehavior === 'function') {
+    sidePanelApi.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => {});
   }
 });
 
 // Helper to open side panel / sidebar in Chrome or Firefox
 async function openSidebarPanel(tab?: chrome.tabs.Tab) {
-  // 1. Chrome SidePanel API
-  if (chrome.sidePanel && tab?.id) {
+  // 1. Firefox SidebarAction API
+  const firefoxBrowser = (globalThis as any).browser;
+  if (firefoxBrowser?.sidebarAction?.open) {
     try {
-      await chrome.sidePanel.open({ tabId: tab.id });
+      await firefoxBrowser.sidebarAction.open();
+      return;
+    } catch {}
+  }
+
+  // 2. Chrome SidePanel API
+  const browserApi = (globalThis as any).chrome;
+  const sidePanelApi = browserApi ? browserApi['sidePanel'] : undefined;
+  if (sidePanelApi && typeof sidePanelApi.open === 'function' && tab?.id) {
+    try {
+      await sidePanelApi.open({ tabId: tab.id });
       return;
     } catch {
       if (tab.windowId) {
         try {
-          await chrome.sidePanel.open({ windowId: tab.windowId });
+          await sidePanelApi.open({ windowId: tab.windowId });
           return;
         } catch {}
       }
     }
-  }
-
-  // 2. Firefox SidebarAction API
-  const firefoxBrowser = (globalThis as any).browser || (globalThis as any).chrome;
-  if (firefoxBrowser?.sidebarAction?.open) {
-    try {
-      await firefoxBrowser.sidebarAction.open();
-    } catch {}
   }
 }
 

@@ -166,7 +166,7 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
 
     function prune(node: HTMLElement, currentDepth: number) {
       if (currentDepth >= maxDepth && node.children.length > 0) {
-        node.innerHTML = `<!-- ... ${node.children.length} child elements truncated ... -->`;
+        node.textContent = `<!-- ... ${node.children.length} child elements truncated ... -->`;
         return;
       }
       for (let i = 0; i < node.children.length; i++) {
@@ -418,12 +418,25 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
 
       this.banner = document.createElement('div');
       this.banner.className = 'uaiselect-banner';
-      this.banner.innerHTML = `
-        <div class="uaiselect-dot"></div>
-        <span><strong>UaiSelect</strong> Inspector activo</span>
-        <span class="uaiselect-kbd">ESC para salir</span>
-        <span class="uaiselect-kbd">↑ / ↓ navegar</span>
-      `;
+
+      const dot = document.createElement('div');
+      dot.className = 'uaiselect-dot';
+
+      const titleSpan = document.createElement('span');
+      const titleStrong = document.createElement('strong');
+      titleStrong.textContent = 'UaiSelect';
+      titleSpan.appendChild(titleStrong);
+      titleSpan.appendChild(document.createTextNode(' Inspector activo'));
+
+      const escKbd = document.createElement('span');
+      escKbd.className = 'uaiselect-kbd';
+      escKbd.textContent = 'ESC para salir';
+
+      const navKbd = document.createElement('span');
+      navKbd.className = 'uaiselect-kbd';
+      navKbd.textContent = '↑ / ↓ navegar';
+
+      this.banner.replaceChildren(dot, titleSpan, escKbd, navKbd);
 
       this.shadowRoot.appendChild(style);
       this.shadowRoot.appendChild(this.highlightBox);
@@ -582,11 +595,25 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
       const sourceText = source ? `${source.fileName.split('/').pop()}:${source.lineNumber}` : '';
       const dims = `${Math.round(rect.width)} × ${Math.round(rect.height)}`;
 
-      this.badge.innerHTML = `
-        <span class="uaiselect-badge-comp">${compName}</span>
-        ${sourceText ? `<span class="uaiselect-badge-src">${sourceText}</span>` : ''}
-        <span class="uaiselect-badge-dim">${dims}</span>
-      `;
+      const compSpan = document.createElement('span');
+      compSpan.className = 'uaiselect-badge-comp';
+      compSpan.textContent = compName;
+
+      const badgeNodes: Node[] = [compSpan];
+
+      if (sourceText) {
+        const srcSpan = document.createElement('span');
+        srcSpan.className = 'uaiselect-badge-src';
+        srcSpan.textContent = sourceText;
+        badgeNodes.push(srcSpan);
+      }
+
+      const dimSpan = document.createElement('span');
+      dimSpan.className = 'uaiselect-badge-dim';
+      dimSpan.textContent = dims;
+      badgeNodes.push(dimSpan);
+
+      this.badge.replaceChildren(...badgeNodes);
 
       this.badge.style.display = 'flex';
 
