@@ -117,7 +117,7 @@ The `uaiselect-mcp` package runs directly via `npx` and exposes 5 tools:
 ### 🦊 Mozilla Firefox
 
 #### 1. Official Store (1-Click Install)
-* **[Get UaiSelect on Firefox Add-ons](https://addons.mozilla.org/)** *(Awaiting approval)*
+* **[Get UaiSelect on Firefox Add-ons](https://addons.mozilla.org/)** 
 
 #### 2. Manual / Developer Mode (Local)
 1. In Firefox, navigate to `about:debugging#/runtime/this-firefox`
