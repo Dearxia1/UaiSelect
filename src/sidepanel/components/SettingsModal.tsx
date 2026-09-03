@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { X, Check, Sliders, ShieldCheck, Coffee, Heart, ExternalLink, Layout, Cpu, Copy } from 'lucide-react';
+import { X, Check, Sliders, ShieldCheck, Coffee, Heart, ExternalLink, Layout, Cpu, Copy, Palette } from 'lucide-react';
 import { AppSettings, CardVisibilitySettings } from '../../types';
+
+const HIGHLIGHT_COLOR_PRESETS = [
+  '#ffffff',
+  '#22d3ee',
+  '#a78bfa',
+  '#f472b6',
+  '#facc15',
+  '#4ade80',
+  '#fb923c',
+  '#f87171',
+];
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -181,6 +192,49 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
                   />
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Highlight Color Personalization Section */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5 text-zinc-300 font-medium text-[11px]">
+              <Palette className="w-3.5 h-3.5 text-zinc-400" />
+              <span>Color de Resaltado</span>
+            </div>
+            <div className="bg-black/60 rounded-xl border border-zinc-850 p-2.5 space-y-2.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                {HIGHLIGHT_COLOR_PRESETS.map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => setSettings((prev) => ({ ...prev, highlightColor: color }))}
+                    className={`w-6 h-6 rounded-full cursor-pointer transition-transform hover:scale-110 ${
+                      settings.highlightColor === color ? 'ring-2 ring-offset-2 ring-offset-zinc-950 ring-white' : ''
+                    }`}
+                    style={{ backgroundColor: color }}
+                    title={color}
+                  />
+                ))}
+                <label className="relative w-6 h-6 rounded-full cursor-pointer overflow-hidden shrink-0 border border-zinc-700 flex items-center justify-center bg-zinc-900">
+                  <input
+                    type="color"
+                    value={settings.highlightColor || '#ffffff'}
+                    onChange={(e) => setSettings((prev) => ({ ...prev, highlightColor: e.target.value }))}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    title="Color personalizado"
+                  />
+                  <div
+                    className="w-full h-full"
+                    style={{
+                      background: HIGHLIGHT_COLOR_PRESETS.includes(settings.highlightColor)
+                        ? 'conic-gradient(from 0deg, #f87171, #facc15, #4ade80, #22d3ee, #a78bfa, #f472b6, #f87171)'
+                        : settings.highlightColor,
+                    }}
+                  />
+                </label>
+              </div>
+              <p className="text-[10px] text-zinc-500 leading-relaxed">
+                Define el color del recuadro y la insignia que resalta el elemento seleccionado en la página.
+              </p>
             </div>
           </div>
 
