@@ -100,6 +100,7 @@ export interface AppSettings {
   showFloatingBanner: boolean;
   theme: 'dark' | 'light' | 'system';
   highlightColor: string;
+  backgroundColor: string;
   customPromptPrefix: string;
   cards: CardVisibilitySettings;
 }

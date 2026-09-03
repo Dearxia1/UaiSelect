@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { Target, PanelRight } from 'lucide-react';
 import { Logo } from '../sidepanel/components/Logo';
-import { applyAccentTheme } from '../utils/accentTheme';
+import { applyAccentTheme, applyBackgroundTheme } from '../utils/accentTheme';
 import '../sidepanel/index.css';
 
 const PopupApp: React.FC = () => {
@@ -11,6 +11,7 @@ const PopupApp: React.FC = () => {
   useEffect(() => {
     chrome.storage.local.get(['settings'], (res) => {
       applyAccentTheme(res.settings?.highlightColor);
+      applyBackgroundTheme(res.settings?.backgroundColor);
     });
   }, []);
 
@@ -58,7 +59,7 @@ const PopupApp: React.FC = () => {
   };
 
   return (
-    <div className="space-y-3 bg-black text-zinc-100 p-1">
+    <div className="space-y-3 bg-[var(--uaiselect-bg)] text-zinc-100 p-1">
       <div className="flex items-center justify-between border-b border-zinc-800 pb-2.5">
         <Logo height={16} className="text-[var(--uaiselect-accent)]" />
         <span className="text-[9px] bg-zinc-900 text-zinc-400 font-mono font-semibold px-1.5 py-0.5 rounded border border-zinc-800">

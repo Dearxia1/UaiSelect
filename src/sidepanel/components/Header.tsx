@@ -35,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="flex items-center justify-between px-3.5 py-2.5 bg-black/90 backdrop-blur border-b border-zinc-800/80 sticky top-0 z-40">
+    <header className="flex items-center justify-between px-3.5 py-2.5 bg-[color-mix(in_srgb,var(--uaiselect-bg)_90%,transparent)] backdrop-blur border-b border-zinc-800/80 sticky top-0 z-40">
       <div className="flex items-center gap-2">
         <Logo height={15} className="text-[var(--uaiselect-accent)] hover:opacity-90 transition-opacity" />
         <button

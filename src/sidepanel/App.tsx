@@ -8,7 +8,7 @@ import { StylesCard } from './components/StylesCard';
 import { SnapshotCard } from './components/SnapshotCard';
 import { PromptBox } from './components/PromptBox';
 import { SettingsModal } from './components/SettingsModal';
-import { applyAccentTheme } from '../utils/accentTheme';
+import { applyAccentTheme, applyBackgroundTheme } from '../utils/accentTheme';
 
 const DEFAULT_CARDS: CardVisibilitySettings = {
   showHierarchy: true,
@@ -33,6 +33,7 @@ export const App: React.FC = () => {
         setCardsVisibility({ ...DEFAULT_CARDS, ...result.settings.cards });
       }
       applyAccentTheme(result.settings?.highlightColor);
+      applyBackgroundTheme(result.settings?.backgroundColor);
     });
 
     // 2. Listen for real-time element selections
@@ -99,10 +100,11 @@ export const App: React.FC = () => {
       setCardsVisibility({ ...DEFAULT_CARDS, ...newSettings.cards });
     }
     applyAccentTheme(newSettings.highlightColor);
+    applyBackgroundTheme(newSettings.backgroundColor);
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-zinc-100 antialiased font-sans">
+    <div className="flex flex-col min-h-screen bg-[var(--uaiselect-bg)] text-zinc-100 antialiased font-sans">
       <Header
         onToggleInspector={handleToggleInspector}
         onOpenSettings={() => setIsSettingsOpen(true)}

@@ -5,11 +5,26 @@
 :root {
   --uaiselect-accent: #ffffff;
   --uaiselect-accent-fg: #000000;
+  --uaiselect-bg: #000000;
+  --uaiselect-surface-1: #09090b;
+  --uaiselect-surface-2: #18181b;
+  --uaiselect-surface-3: #27272a;
+  --uaiselect-border-1: #18181b;
+  --uaiselect-border-2: #27272a;
+  --uaiselect-border-3: #3f3f46;
+  --uaiselect-text-1: #f4f4f5;
+  --uaiselect-text-2: #e4e4e7;
+  --uaiselect-text-3: #d4d4d8;
+  --uaiselect-text-4: #a1a1aa;
+  --uaiselect-text-5: #71717a;
+  --uaiselect-text-6: #52525b;
+  --uaiselect-text-7: #3f3f46;
 }
 
 @layer base {
   body {
-    @apply bg-black text-zinc-100 font-sans antialiased select-none;
+    @apply text-zinc-100 font-sans antialiased select-none;
+    background-color: var(--uaiselect-bg);
     margin: 0;
     padding: 0;
     min-height: 100vh;
@@ -33,4 +48,50 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #3f3f46;
+}
+
+/*
+ * Panel theming layer.
+ *
+ * The whole UI is built with fixed Tailwind zinc/black utilities. Rather
+ * than rewriting every card/border/text class across every component,
+ * this block remaps the exact set of those utilities that make up the
+ * panel "chrome" (surfaces, borders, text scale) onto the contrast-aware
+ * tokens computed by applyBackgroundTheme() in utils/accentTheme.ts.
+ * Small functional/status colors (spinners, the offline dot, disabled
+ * thumbs) are deliberately left out so they stay neutral regardless of
+ * the chosen background.
+ */
+@layer utilities {
+  .bg-black { background-color: var(--uaiselect-bg); }
+  .bg-black\/40 { background-color: color-mix(in srgb, var(--uaiselect-bg) 40%, transparent); }
+  .bg-black\/60 { background-color: color-mix(in srgb, var(--uaiselect-bg) 60%, transparent); }
+  .bg-black\/80 { background-color: color-mix(in srgb, var(--uaiselect-bg) 80%, transparent); }
+  .bg-black\/90 { background-color: color-mix(in srgb, var(--uaiselect-bg) 90%, transparent); }
+
+  .bg-zinc-950 { background-color: var(--uaiselect-surface-1); }
+  .bg-zinc-900 { background-color: var(--uaiselect-surface-2); }
+  .bg-zinc-900\/20 { background-color: color-mix(in srgb, var(--uaiselect-surface-2) 20%, transparent); }
+  .bg-zinc-900\/40 { background-color: color-mix(in srgb, var(--uaiselect-surface-2) 40%, transparent); }
+  .bg-zinc-900\/50 { background-color: color-mix(in srgb, var(--uaiselect-surface-2) 50%, transparent); }
+  .bg-zinc-900\/60 { background-color: color-mix(in srgb, var(--uaiselect-surface-2) 60%, transparent); }
+  .bg-zinc-900\/80 { background-color: color-mix(in srgb, var(--uaiselect-surface-2) 80%, transparent); }
+  .bg-zinc-800 { background-color: var(--uaiselect-surface-3); }
+
+  .border-zinc-900 { border-color: var(--uaiselect-border-1); }
+  .border-zinc-800 { border-color: var(--uaiselect-border-2); }
+  .border-zinc-800\/60 { border-color: color-mix(in srgb, var(--uaiselect-border-2) 60%, transparent); }
+  .border-zinc-800\/80 { border-color: color-mix(in srgb, var(--uaiselect-border-2) 80%, transparent); }
+  .border-zinc-700 { border-color: var(--uaiselect-border-3); }
+  .border-zinc-700\/60 { border-color: color-mix(in srgb, var(--uaiselect-border-3) 60%, transparent); }
+
+  .ring-offset-zinc-950 { --tw-ring-offset-color: var(--uaiselect-surface-1); }
+
+  .text-zinc-100 { color: var(--uaiselect-text-1); }
+  .text-zinc-200 { color: var(--uaiselect-text-2); }
+  .text-zinc-300 { color: var(--uaiselect-text-3); }
+  .text-zinc-400 { color: var(--uaiselect-text-4); }
+  .text-zinc-500 { color: var(--uaiselect-text-5); }
+  .text-zinc-600 { color: var(--uaiselect-text-6); }
+  .text-zinc-700 { color: var(--uaiselect-text-7); }
 }

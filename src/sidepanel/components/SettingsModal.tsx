@@ -13,6 +13,17 @@ const HIGHLIGHT_COLOR_PRESETS = [
   '#f87171',
 ];
 
+const BACKGROUND_COLOR_PRESETS = [
+  '#000000',
+  '#09090b',
+  '#0f172a',
+  '#1e1b4b',
+  '#052e16',
+  '#450a0a',
+  '#1c1917',
+  '#111827',
+];
+
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -32,6 +43,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   showFloatingBanner: true,
   theme: 'dark',
   highlightColor: '#ffffff',
+  backgroundColor: '#000000',
   customPromptPrefix: '',
   cards: DEFAULT_CARDS,
 };
@@ -234,6 +246,49 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
               </div>
               <p className="text-[10px] text-zinc-500 leading-relaxed">
                 Define el color del recuadro y la insignia que resalta el elemento seleccionado en la página.
+              </p>
+            </div>
+          </div>
+
+          {/* Background Color Personalization Section */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5 text-zinc-300 font-medium text-[11px]">
+              <Palette className="w-3.5 h-3.5 text-zinc-400" />
+              <span>Color de Fondo</span>
+            </div>
+            <div className="bg-black/60 rounded-xl border border-zinc-850 p-2.5 space-y-2.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                {BACKGROUND_COLOR_PRESETS.map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => setSettings((prev) => ({ ...prev, backgroundColor: color }))}
+                    className={`w-6 h-6 rounded-full cursor-pointer transition-transform hover:scale-110 border border-zinc-800 ${
+                      settings.backgroundColor === color ? 'ring-2 ring-offset-2 ring-offset-zinc-950 ring-white' : ''
+                    }`}
+                    style={{ backgroundColor: color }}
+                    title={color}
+                  />
+                ))}
+                <label className="relative w-6 h-6 rounded-full cursor-pointer overflow-hidden shrink-0 border border-zinc-700 flex items-center justify-center bg-zinc-900">
+                  <input
+                    type="color"
+                    value={settings.backgroundColor || '#000000'}
+                    onChange={(e) => setSettings((prev) => ({ ...prev, backgroundColor: e.target.value }))}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    title="Color personalizado"
+                  />
+                  <div
+                    className="w-full h-full"
+                    style={{
+                      background: BACKGROUND_COLOR_PRESETS.includes(settings.backgroundColor)
+                        ? 'conic-gradient(from 0deg, #000000, #1e1b4b, #052e16, #450a0a, #111827, #1c1917, #000000)'
+                        : settings.backgroundColor,
+                    }}
+                  />
+                </label>
+              </div>
+              <p className="text-[10px] text-zinc-500 leading-relaxed">
+                Define el color base del panel de la extensión. Se recomiendan tonos oscuros para mantener la legibilidad del texto.
               </p>
             </div>
           </div>
