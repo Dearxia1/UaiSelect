@@ -148,7 +148,7 @@ export const PromptBox: React.FC<PromptBoxProps> = ({ elementData }) => {
           className={`flex-1 py-2 px-3 rounded-lg font-semibold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-98 ${
             copied
               ? 'bg-zinc-800 text-white border border-zinc-600'
-              : 'bg-white hover:bg-zinc-200 text-black shadow-sm'
+              : 'bg-[var(--uaiselect-accent)] hover:brightness-90 text-[var(--uaiselect-accent-fg)] shadow-sm'
           }`}
         >
           {copied ? (

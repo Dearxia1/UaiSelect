@@ -221,7 +221,7 @@ export const SnapshotCard: React.FC<SnapshotCardProps> = ({ elementData }) => {
             </p>
             <button
               onClick={handleCaptureFullPage}
-              className="mt-1 px-2.5 py-1 bg-white text-black font-semibold rounded-md hover:bg-zinc-200 text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="mt-1 px-2.5 py-1 bg-[var(--uaiselect-accent)] text-[var(--uaiselect-accent-fg)] font-semibold rounded-md hover:brightness-90 text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Camera className="w-3 h-3" />
               <span>Capturar Toda la Web</span>
@@ -236,7 +236,7 @@ export const SnapshotCard: React.FC<SnapshotCardProps> = ({ elementData }) => {
             </p>
             <button
               onClick={handleCaptureViewport}
-              className="mt-1 px-2.5 py-1 bg-white text-black font-semibold rounded-md hover:bg-zinc-200 text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="mt-1 px-2.5 py-1 bg-[var(--uaiselect-accent)] text-[var(--uaiselect-accent-fg)] font-semibold rounded-md hover:brightness-90 text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Camera className="w-3 h-3" />
               <span>Capturar Pantalla</span>

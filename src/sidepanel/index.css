@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --uaiselect-accent: #ffffff;
+  --uaiselect-accent-fg: #000000;
+}
+
 @layer base {
   body {
     @apply bg-black text-zinc-100 font-sans antialiased select-none;

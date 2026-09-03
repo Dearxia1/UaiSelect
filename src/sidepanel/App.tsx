@@ -8,6 +8,7 @@ import { StylesCard } from './components/StylesCard';
 import { SnapshotCard } from './components/SnapshotCard';
 import { PromptBox } from './components/PromptBox';
 import { SettingsModal } from './components/SettingsModal';
+import { applyAccentTheme } from '../utils/accentTheme';
 
 const DEFAULT_CARDS: CardVisibilitySettings = {
   showHierarchy: true,
@@ -31,6 +32,7 @@ export const App: React.FC = () => {
       if (result.settings?.cards) {
         setCardsVisibility({ ...DEFAULT_CARDS, ...result.settings.cards });
       }
+      applyAccentTheme(result.settings?.highlightColor);
     });
 
     // 2. Listen for real-time element selections
@@ -96,6 +98,7 @@ export const App: React.FC = () => {
     if (newSettings.cards) {
       setCardsVisibility({ ...DEFAULT_CARDS, ...newSettings.cards });
     }
+    applyAccentTheme(newSettings.highlightColor);
   };
 
   return (
@@ -155,7 +158,7 @@ export const App: React.FC = () => {
 
             <button
               onClick={handleToggleInspector}
-              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-zinc-200 text-black rounded-lg text-xs font-semibold shadow-sm transition-all active:scale-95 cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--uaiselect-accent)] hover:brightness-90 text-[var(--uaiselect-accent-fg)] rounded-lg text-xs font-semibold shadow-sm transition-all active:scale-95 cursor-pointer"
             >
               <Target className="w-3.5 h-3.5" />
               <span>Activar Inspector Visual</span>

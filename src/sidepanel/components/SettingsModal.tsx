@@ -157,13 +157,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
                 </div>
                 <div
                   className={`w-7 h-4 rounded-full transition-colors relative flex items-center p-0.5 shrink-0 ${
-                    settings.showFloatingBanner !== false ? 'bg-white' : 'bg-zinc-800'
+                    settings.showFloatingBanner !== false ? 'bg-[var(--uaiselect-accent)]' : 'bg-zinc-800'
                   }`}
                 >
                   <div
                     className={`w-3 h-3 rounded-full transition-transform ${
                       settings.showFloatingBanner !== false
-                        ? 'bg-black translate-x-3'
+                        ? 'bg-[var(--uaiselect-accent-fg)] translate-x-3'
                         : 'bg-zinc-500 translate-x-0'
                     }`}
                   />
@@ -180,13 +180,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
                 </div>
                 <div
                   className={`w-7 h-4 rounded-full transition-colors relative flex items-center p-0.5 shrink-0 ${
-                    settings.autoCaptureScreenshot !== false ? 'bg-white' : 'bg-zinc-800'
+                    settings.autoCaptureScreenshot !== false ? 'bg-[var(--uaiselect-accent)]' : 'bg-zinc-800'
                   }`}
                 >
                   <div
                     className={`w-3 h-3 rounded-full transition-transform ${
                       settings.autoCaptureScreenshot !== false
-                        ? 'bg-black translate-x-3'
+                        ? 'bg-[var(--uaiselect-accent-fg)] translate-x-3'
                         : 'bg-zinc-500 translate-x-0'
                     }`}
                   />
@@ -262,13 +262,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
                     <span className="text-[11px] text-zinc-300 select-none">{item.label}</span>
                     <div
                       className={`w-7 h-4 rounded-full transition-colors relative flex items-center p-0.5 ${
-                        isChecked ? 'bg-white' : 'bg-zinc-800'
+                        isChecked ? 'bg-[var(--uaiselect-accent)]' : 'bg-zinc-800'
                       }`}
                     >
                       <div
                         className={`w-3 h-3 rounded-full transition-transform ${
                           isChecked
-                            ? 'bg-black translate-x-3'
+                            ? 'bg-[var(--uaiselect-accent-fg)] translate-x-3'
                             : 'bg-zinc-500 translate-x-0'
                         }`}
                       />
@@ -372,7 +372,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
 
           <button
             onClick={handleSave}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-zinc-200 text-black rounded-lg text-xs font-semibold transition-all shadow-sm active:scale-95 cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[var(--uaiselect-accent)] hover:brightness-90 text-[var(--uaiselect-accent-fg)] rounded-lg text-xs font-semibold transition-all shadow-sm active:scale-95 cursor-pointer"
           >
             {saved ? <Check className="w-3.5 h-3.5" /> : null}
             <span>{saved ? 'Guardado' : 'Guardar'}</span>

@@ -37,7 +37,7 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="flex items-center justify-between px-3.5 py-2.5 bg-black/90 backdrop-blur border-b border-zinc-800/80 sticky top-0 z-40">
       <div className="flex items-center gap-2">
-        <Logo height={15} className="text-white hover:opacity-90 transition-opacity" />
+        <Logo height={15} className="text-[var(--uaiselect-accent)] hover:opacity-90 transition-opacity" />
         <button
           onClick={onOpenSettings}
           className={`flex items-center gap-1 text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${
@@ -63,7 +63,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         <button
           onClick={onToggleInspector}
-          className="flex items-center gap-1.5 px-2.5 py-1 bg-white hover:bg-zinc-200 text-black rounded-md text-xs font-semibold shadow-sm transition-all active:scale-95 cursor-pointer"
+          className="flex items-center gap-1.5 px-2.5 py-1 bg-[var(--uaiselect-accent)] hover:brightness-90 text-[var(--uaiselect-accent-fg)] rounded-md text-xs font-semibold shadow-sm transition-all active:scale-95 cursor-pointer"
           title="Activar selector en la página (Alt+Shift+X)"
         >
           <Target className="w-3 h-3" />

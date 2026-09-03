@@ -1,11 +1,18 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { Target, PanelRight } from 'lucide-react';
 import { Logo } from '../sidepanel/components/Logo';
+import { applyAccentTheme } from '../utils/accentTheme';
 import '../sidepanel/index.css';
 
 const PopupApp: React.FC = () => {
   const [active, setActive] = useState(false);
+
+  useEffect(() => {
+    chrome.storage.local.get(['settings'], (res) => {
+      applyAccentTheme(res.settings?.highlightColor);
+    });
+  }, []);
 
   const handleInspect = async () => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -53,7 +60,7 @@ const PopupApp: React.FC = () => {
   return (
     <div className="space-y-3 bg-black text-zinc-100 p-1">
       <div className="flex items-center justify-between border-b border-zinc-800 pb-2.5">
-        <Logo height={16} className="text-white" />
+        <Logo height={16} className="text-[var(--uaiselect-accent)]" />
         <span className="text-[9px] bg-zinc-900 text-zinc-400 font-mono font-semibold px-1.5 py-0.5 rounded border border-zinc-800">
           DevTools
         </span>
@@ -65,7 +72,7 @@ const PopupApp: React.FC = () => {
 
       <button
         onClick={handleInspect}
-        className="w-full py-2 px-3 bg-white hover:bg-zinc-200 text-black rounded-lg text-xs font-semibold shadow-sm flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
+        className="w-full py-2 px-3 bg-[var(--uaiselect-accent)] hover:brightness-90 text-[var(--uaiselect-accent-fg)] rounded-lg text-xs font-semibold shadow-sm flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
       >
         <Target className="w-3.5 h-3.5" />
         <span>{active ? 'Inspector Activo' : 'Activar Selector Visual'}</span>
