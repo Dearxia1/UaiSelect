@@ -35,7 +35,29 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
     return p;
   }
 
+  // Keep in sync with the "exclude_matches" hosts in manifest.chrome.json / manifest.firefox.json.
+  // These Google Workspace apps run on a heavily instrumented (Closure-compiled) DOM that the
+  // Main World Fiber-walking engine can crash into, even when content.js is injected on-demand
+  // (e.g. via the Alt+Shift+X shortcut fallback), so the bridge must never be loaded there.
+  const MAIN_WORLD_EXCLUDED_HOSTS = [
+    'docs.google.com',
+    'drive.google.com',
+    'mail.google.com',
+    'calendar.google.com',
+    'meet.google.com',
+  ];
+
+  function isMainWorldExcludedHost(): boolean {
+    try {
+      const host = window.location.hostname;
+      return MAIN_WORLD_EXCLUDED_HOSTS.some((h) => host === h || host.endsWith(`.${h}`));
+    } catch {
+      return false;
+    }
+  }
+
   function ensureMainWorldBridge() {
+    if (isMainWorldExcludedHost()) return;
     if (document.getElementById('uaiselect-main-world-bridge')) return;
     try {
       const scriptSrc = document.createElement('script');
@@ -310,8 +332,8 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
         }
         .uaiselect-highlight {
           position: fixed;
-          border: 1.5px solid #ffffff;
-          background: rgba(255, 255, 255, 0.08);
+          border: 1.5px solid var(--uaiselect-accent, #ffffff);
+          background: color-mix(in srgb, var(--uaiselect-accent, #ffffff) 8%, transparent);
           border-radius: 4px;
           box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.8), 0 4px 20px rgba(0, 0, 0, 0.5);
           pointer-events: none;
@@ -341,7 +363,7 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
           transition: all 0.06s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .uaiselect-badge-comp {
-          color: #ffffff;
+          color: var(--uaiselect-accent, #ffffff);
           font-weight: 700;
         }
         .uaiselect-badge-src {
@@ -393,17 +415,17 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
           width: 7px;
           height: 7px;
           border-radius: 50%;
-          background: #ffffff;
-          box-shadow: 0 0 8px #ffffff;
+          background: var(--uaiselect-accent, #ffffff);
+          box-shadow: 0 0 8px var(--uaiselect-accent, #ffffff);
         }
         @keyframes uaiselect-fade-in {
           from { opacity: 0; transform: translate(-50%, 10px); }
           to { opacity: 1; transform: translate(-50%, 0); }
         }
         @keyframes uaiselect-flash {
-          0% { background: rgba(255, 255, 255, 0.3); transform: scale(1); }
-          50% { background: rgba(255, 255, 255, 0.6); transform: scale(1.01); }
-          100% { background: rgba(255, 255, 255, 0.08); transform: scale(1); }
+          0% { background: color-mix(in srgb, var(--uaiselect-accent, #ffffff) 30%, transparent); transform: scale(1); }
+          50% { background: color-mix(in srgb, var(--uaiselect-accent, #ffffff) 60%, transparent); transform: scale(1.01); }
+          100% { background: color-mix(in srgb, var(--uaiselect-accent, #ffffff) 8%, transparent); transform: scale(1); }
         }
         .uaiselect-flash-anim {
           animation: uaiselect-flash 0.25s ease-out;
@@ -448,10 +470,17 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
           if (res.settings && res.settings.showFloatingBanner === false && this.banner) {
             this.banner.style.display = 'none';
           }
+          this.applyAccentColor(res.settings?.highlightColor);
         });
       }
 
       (document.documentElement || document.body).appendChild(this.container);
+    }
+
+    private applyAccentColor(color?: string): void {
+      if (this.container) {
+        this.container.style.setProperty('--uaiselect-accent', color || '#ffffff');
+      }
     }
 
     private removeOverlayDOM(): void {
