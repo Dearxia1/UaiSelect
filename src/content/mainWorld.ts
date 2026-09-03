@@ -47,17 +47,19 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
 
     while (current && depth < 6) {
       // Check direct property keys (standard in modern React)
-      const keys = Object.keys(current);
-      for (let i = 0; i < keys.length; i++) {
-        const key = keys[i];
-        if (
-          key.startsWith('__reactFiber$') ||
-          key.startsWith('__reactInternalInstance$')
-        ) {
-          const fiber = (current as any)[key];
-          if (fiber) return fiber;
+      try {
+        const keys = Object.keys(current);
+        for (let i = 0; i < keys.length; i++) {
+          const key = keys[i];
+          if (
+            key.startsWith('__reactFiber$') ||
+            key.startsWith('__reactInternalInstance$')
+          ) {
+            const fiber = (current as any)[key];
+            if (fiber) return fiber;
+          }
         }
-      }
+      } catch {}
 
       // Check property names including non-enumerable
       try {
