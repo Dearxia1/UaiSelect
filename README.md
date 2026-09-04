@@ -11,7 +11,7 @@ Extract React/Vue component hierarchy, state hooks, props, Tailwind classes, and
 [**Español 🇪🇸**](README.es.md) • [**English 🇺🇸**](README.md) • [**npm: uaiselect-mcp**](https://www.npmjs.com/package/uaiselect-mcp)
 
 [![Chrome Extension](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4.svg?logo=google-chrome&logoColor=white)](https://developer.chrome.com/docs/extensions/mv3/)
-[![Firefox Add-on](https://img.shields.io/badge/Firefox-Add--on-FF7139.svg?logo=firefox&logoColor=white)](https://addons.mozilla.org/)
+[![Firefox Add-on](https://img.shields.io/badge/Firefox-Add--on-FF7139.svg?logo=firefox&logoColor=white)](https://addons.mozilla.org/en-US/firefox/addon/uaiselect-uiinspector-devtools/)
 [![npm package](https://img.shields.io/npm/v/uaiselect-mcp.svg?logo=npm&color=CB3837)](https://www.npmjs.com/package/uaiselect-mcp)
 [![MCP Protocol](https://img.shields.io/badge/MCP-Protocol%20Ready-7952CC.svg?logo=anthropic&logoColor=white)](https://modelcontextprotocol.io/)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-ff5e5b.svg?logo=ko-fi&logoColor=white)](https://ko-fi.com/danielmejiaruales)
@@ -117,7 +117,7 @@ The `uaiselect-mcp` package runs directly via `npx` and exposes 5 tools:
 ### 🦊 Mozilla Firefox
 
 #### 1. Official Store (1-Click Install)
-* **[Get UaiSelect on Firefox Add-ons](https://addons.mozilla.org/)** 
+* **[Get UaiSelect on Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/uaiselect-uiinspector-devtools/)** 
 
 #### 2. Manual / Developer Mode (Local)
 1. In Firefox, navigate to `about:debugging#/runtime/this-firefox`
