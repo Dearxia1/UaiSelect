@@ -20,14 +20,27 @@ const MAIN_WORLD_BRIDGE_SCRIPT = `
   function getComponentName(type) {
     if (!type) return null;
     if (typeof type === 'string') return type;
-    if (typeof type === 'function') return type.displayName || type.name || 'Component';
+    if (typeof type === 'function') return type.displayName || type.name || null;
     if (typeof type === 'object') {
       if (type.displayName) return type.displayName;
       if (type.name) return type.name;
-      if (type.render) return type.render.displayName || type.render.name || 'ForwardRef';
+      if (type.render) return type.render.displayName || type.render.name || null;
       if (type.type) return getComponentName(type.type);
     }
     return null;
+  }
+
+  function isNoiseName(name) {
+    if (!name || typeof name !== 'string') return true;
+    var t = name.trim();
+    if (t.length <= 2) return true;
+    return /^(AnonymousComponent|Component|ForwardRef|Memo|Fragment|Suspense|StrictMode|Profiler|ContextProvider|ContextConsumer|Slot|SlotClone)$/i.test(t);
+  }
+
+  function isWrapperName(name) {
+    if (!name) return false;
+    return /(Provider|Context|Boundary|Consumer|FeatureFlags|Scope|Router|Routes|Route|RouteId|IsDataRoute|Location|Navigation|PartialEntry|BaseProviders)$/i.test(name) ||
+           name.indexOf('Context') !== -1 || name.indexOf('Provider') !== -1 || name.indexOf('Boundary') !== -1;
   }
 
   function findFiber(node) {
@@ -129,7 +142,7 @@ const MAIN_WORLD_BRIDGE_SCRIPT = `
         var src = extractFiberSource(current);
         var isCustom = typeof current.type === 'function' || (typeof current.type === 'object' && compName !== null && typeof current.type !== 'string');
 
-        if (compName && compName !== 'div' && compName !== 'span' && isCustom) {
+        if (compName && compName !== 'div' && compName !== 'span' && isCustom && !isNoiseName(compName)) {
           if (!visitedNames[compName]) {
             visitedNames[compName] = true;
             var nodeSource = null;
@@ -143,14 +156,17 @@ const MAIN_WORLD_BRIDGE_SCRIPT = `
               };
             }
 
+            var isWrap = isWrapperName(compName);
+
             result.hierarchy.unshift({
               name: compName,
               tag: typeof current.type === 'string' ? current.type : 'component',
               source: nodeSource,
-              isCustomComponent: true
+              isCustomComponent: true,
+              isWrapper: isWrap
             });
 
-            if (!result.source && nodeSource) {
+            if (!result.source && nodeSource && !isWrap) {
               result.source = nodeSource;
             }
           }

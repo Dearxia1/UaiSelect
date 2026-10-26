@@ -1,59 +1,73 @@
 import React, { useState } from 'react';
 import { Palette, Copy, Check, Eye } from 'lucide-react';
-import { ComputedStyleSummary } from '../../types';
+import { ComputedStyleSummary, ParentLayoutContext } from '../../types';
 
 interface StylesCardProps {
   tailwindClasses: string[];
   customClasses: string[];
   computedStyles: ComputedStyleSummary;
+  parentContext?: ParentLayoutContext;
 }
 
 export const StylesCard: React.FC<StylesCardProps> = ({
   tailwindClasses,
   customClasses,
   computedStyles,
+  parentContext,
 }) => {
   const [copied, setCopied] = useState(false);
   const [showComputed, setShowComputed] = useState(false);
+  const [showAllClasses, setShowAllClasses] = useState(false);
+
+  const allClasses = [
+    ...tailwindClasses.map((c) => ({ name: c, isTailwind: true })),
+    ...customClasses.map((c) => ({ name: `.${c}`, isTailwind: false })),
+  ];
 
   const handleCopyClasses = () => {
-    const all = [...tailwindClasses, ...customClasses].join(' ');
-    if (!all) return;
-    navigator.clipboard.writeText(all);
+    const raw = [...tailwindClasses, ...customClasses].join(' ');
+    if (!raw) return;
+    navigator.clipboard.writeText(raw);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
 
-  const hasClasses = tailwindClasses.length > 0 || customClasses.length > 0;
+  const hasClasses = allClasses.length > 0;
+  const MAX_INITIAL_CLASSES = 10;
+  const visibleClasses = showAllClasses ? allClasses : allClasses.slice(0, MAX_INITIAL_CLASSES);
+  const hiddenClassesCount = Math.max(0, allClasses.length - MAX_INITIAL_CLASSES);
 
   return (
     <div className="p-3 bg-zinc-950 border border-zinc-800/80 rounded-xl space-y-2.5 shadow-sm">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-zinc-300 text-xs font-semibold">
           <Palette className="w-3.5 h-3.5 text-zinc-400" />
-          <span>Clases & Estilos</span>
+          <span>Estilos & Layout</span>
           {hasClasses && (
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-zinc-900 text-zinc-400 font-mono border border-zinc-800">
-              {tailwindClasses.length + customClasses.length}
+              {allClasses.length}
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           <button
             onClick={() => setShowComputed(!showComputed)}
-            className={`p-1 rounded text-xs transition-colors flex items-center gap-1 ${
-              showComputed ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'
+            className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors flex items-center gap-1 cursor-pointer border ${
+              showComputed
+                ? 'bg-zinc-800 text-zinc-100 border-zinc-700'
+                : 'bg-zinc-900/50 text-zinc-400 border-zinc-800/60 hover:text-zinc-200'
             }`}
-            title="Ver estilos computados"
+            title="Ver detalles de CSS computado y contenedor padre"
           >
-            <Eye className="w-3.5 h-3.5" />
+            <Eye className="w-3 h-3" />
+            <span>CSS</span>
           </button>
 
           {hasClasses && (
             <button
               onClick={handleCopyClasses}
-              className="p-1 text-zinc-400 hover:text-white hover:bg-zinc-900 rounded transition-colors cursor-pointer"
+              className="p-1 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 rounded transition-colors cursor-pointer"
               title="Copiar todas las clases"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-zinc-200" /> : <Copy className="w-3.5 h-3.5" />}
@@ -62,60 +76,74 @@ export const StylesCard: React.FC<StylesCardProps> = ({
         </div>
       </div>
 
-      {/* Tailwind & Custom Classes */}
-      {hasClasses ? (
-        <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto pr-1">
-          {tailwindClasses.map((cls, idx) => (
-            <span
-              key={`tw-${idx}`}
-              className="px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-300 border border-zinc-800 text-[11px] font-mono hover:border-zinc-700 transition-colors"
-            >
-              {cls}
-            </span>
-          ))}
-          {customClasses.map((cls, idx) => (
-            <span
-              key={`custom-${idx}`}
-              className="px-1.5 py-0.5 rounded bg-zinc-900/60 text-zinc-400 border border-zinc-800/80 text-[11px] font-mono"
-            >
-              .{cls}
-            </span>
-          ))}
-        </div>
-      ) : (
-        <p className="text-xs text-zinc-600 italic">Sin clases CSS detectadas.</p>
-      )}
-
-      {/* Quick Metrics Bar */}
-      <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-zinc-900 text-[11px]">
-        <div className="bg-black/60 p-2 rounded-lg border border-zinc-900">
-          <span className="text-zinc-500 block text-[10px]">Dimensiones</span>
-          <span className="font-mono font-medium text-zinc-200">{computedStyles.width} × {computedStyles.height}</span>
+      {/* Compact Single-Line Metrics Strip */}
+      <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 bg-black/60 rounded-lg border border-zinc-900 text-[11px] font-mono">
+        <div className="flex items-center gap-1.5 text-zinc-300">
+          <span className="text-zinc-500 text-[10px] font-sans">Display:</span>
+          <span>{computedStyles.display}</span>
+          {computedStyles.flexDirection && (
+            <span className="text-zinc-500">({computedStyles.flexDirection})</span>
+          )}
         </div>
 
-        <div className="bg-black/60 p-2 rounded-lg border border-zinc-900">
-          <span className="text-zinc-500 block text-[10px]">Display</span>
-          <span className="font-mono font-medium text-zinc-200">{computedStyles.display}</span>
-        </div>
-
-        <div className="bg-black/60 p-2 rounded-lg border border-zinc-900">
-          <span className="text-zinc-500 block text-[10px]">Color / Fondo</span>
-          <div className="flex items-center gap-1.5 mt-0.5">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1" title={`Texto: ${computedStyles.color}`}>
             <span
-              className="w-3 h-3 rounded-full border border-zinc-700 inline-block shadow-sm"
-              style={{ backgroundColor: computedStyles.backgroundColor !== 'rgba(0, 0, 0, 0)' ? computedStyles.backgroundColor : '#18181b' }}
-              title={`Fondo: ${computedStyles.backgroundColor}`}
-            />
-            <span
-              className="w-3 h-3 rounded-full border border-zinc-700 inline-block shadow-sm"
+              className="w-2.5 h-2.5 rounded-full border border-zinc-700 inline-block"
               style={{ backgroundColor: computedStyles.color }}
-              title={`Texto: ${computedStyles.color}`}
+            />
+          </div>
+          <div className="flex items-center gap-1" title={`Fondo: ${computedStyles.backgroundColor}`}>
+            <span
+              className="w-2.5 h-2.5 rounded-full border border-zinc-700 inline-block"
+              style={{
+                backgroundColor:
+                  computedStyles.backgroundColor !== 'rgba(0, 0, 0, 0)'
+                    ? computedStyles.backgroundColor
+                    : '#18181b',
+              }}
             />
           </div>
         </div>
       </div>
 
-      {/* Extended Computed Styles Accordion */}
+      {/* Tailwind & Custom Classes */}
+      {hasClasses ? (
+        <div className="flex flex-wrap items-center gap-1">
+          {visibleClasses.map((item, idx) => (
+            <span
+              key={`cls-${idx}`}
+              className={`px-1.5 py-0.5 rounded text-[11px] font-mono transition-colors ${
+                item.isTailwind
+                  ? 'bg-zinc-900 text-zinc-300 border border-zinc-800'
+                  : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800/60'
+              }`}
+            >
+              {item.name}
+            </span>
+          ))}
+          {hiddenClassesCount > 0 && !showAllClasses && (
+            <button
+              onClick={() => setShowAllClasses(true)}
+              className="px-1.5 py-0.5 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-800 text-[10px] font-mono cursor-pointer transition-colors"
+            >
+              +{hiddenClassesCount} más
+            </button>
+          )}
+          {showAllClasses && allClasses.length > MAX_INITIAL_CLASSES && (
+            <button
+              onClick={() => setShowAllClasses(false)}
+              className="px-1.5 py-0.5 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-800 text-[10px] font-mono cursor-pointer transition-colors"
+            >
+              Menos
+            </button>
+          )}
+        </div>
+      ) : (
+        <p className="text-[11px] text-zinc-500 italic">Sin clases CSS directas.</p>
+      )}
+
+      {/* Extended Computed Styles & Parent Container Accordion */}
       {showComputed && (
         <div className="p-2.5 bg-black/80 rounded-lg border border-zinc-800/80 space-y-1.5 text-[11px] font-mono">
           <div className="flex justify-between text-zinc-400">
@@ -127,13 +155,27 @@ export const StylesCard: React.FC<StylesCardProps> = ({
             <span className="text-zinc-200">{computedStyles.margin}</span>
           </div>
           <div className="flex justify-between text-zinc-400">
-            <span>Font:</span>
-            <span className="text-zinc-200">{computedStyles.fontSize} ({computedStyles.fontFamily})</span>
+            <span>Tipografía:</span>
+            <span className="text-zinc-200">
+              {computedStyles.fontSize} · {computedStyles.fontFamily}
+            </span>
           </div>
           <div className="flex justify-between text-zinc-400">
-            <span>Border:</span>
-            <span className="text-zinc-200">{computedStyles.border} (r: {computedStyles.borderRadius})</span>
+            <span>Borde:</span>
+            <span className="text-zinc-200">
+              {computedStyles.borderRadius} ({computedStyles.border})
+            </span>
           </div>
+          {parentContext && (
+            <div className="pt-1.5 mt-1.5 border-t border-zinc-900 flex justify-between text-zinc-400">
+              <span>Padre (&lt;{parentContext.tagName}&gt;):</span>
+              <span className="text-zinc-200">
+                {parentContext.display}
+                {parentContext.flexDirection ? ` (${parentContext.flexDirection})` : ''}
+                {parentContext.gap ? ` · gap ${parentContext.gap}` : ''}
+              </span>
+            </div>
+          )}
         </div>
       )}
     </div>

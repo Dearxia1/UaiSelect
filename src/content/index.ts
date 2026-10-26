@@ -1,4 +1,4 @@
-import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHierarchyNode } from '../types';
+import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHierarchyNode, ParentLayoutContext, ElementSearchAnchors } from '../types';
 
 (function initUaiSelectContentEngine() {
   if ((window as any).__UAISELECT_CONTENT_INITIALIZED__) return;
@@ -180,6 +180,59 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
     };
   }
 
+  function extractParentContext(element: HTMLElement): ParentLayoutContext | undefined {
+    const parent = element.parentElement;
+    if (!parent || parent === document.body || parent === document.documentElement) return undefined;
+    try {
+      const styles = window.getComputedStyle(parent);
+      const isFlex = styles.display.includes('flex');
+      const isGrid = styles.display.includes('grid');
+      return {
+        tagName: parent.tagName.toLowerCase(),
+        id: parent.id || undefined,
+        classes: Array.from(parent.classList || []).slice(0, 12),
+        display: styles.display,
+        position: styles.position !== 'static' ? styles.position : undefined,
+        flexDirection: isFlex ? styles.flexDirection : undefined,
+        justifyContent: (isFlex || isGrid) && styles.justifyContent !== 'normal' ? styles.justifyContent : undefined,
+        alignItems: (isFlex || isGrid) && styles.alignItems !== 'normal' ? styles.alignItems : undefined,
+        gap: styles.gap !== 'normal' && styles.gap !== '0px' ? styles.gap : undefined,
+      };
+    } catch {
+      return undefined;
+    }
+  }
+
+  function extractElementAnchors(element: HTMLElement): ElementSearchAnchors {
+    const testId =
+      element.getAttribute('data-testid') ||
+      element.getAttribute('data-test') ||
+      element.getAttribute('data-cy') ||
+      element.getAttribute('data-qa') ||
+      undefined;
+    const ariaLabel =
+      element.getAttribute('aria-label') ||
+      element.getAttribute('title') ||
+      element.getAttribute('alt') ||
+      undefined;
+    const role = element.getAttribute('role') || undefined;
+    const name = element.getAttribute('name') || undefined;
+    const placeholder = element.getAttribute('placeholder') || undefined;
+    const href = element.getAttribute('href') || undefined;
+    const rawText = (element.innerText || element.textContent || '').replace(/\s+/g, ' ').trim();
+    const textAnchor = rawText.length > 0 ? rawText.slice(0, 80) : undefined;
+
+    return {
+      testId,
+      ariaLabel,
+      role,
+      name,
+      placeholder,
+      href,
+      textAnchor,
+    };
+  }
+
   function getCleanHTMLSnippet(element: HTMLElement, maxDepth = 2): {
     innerSnippet: string;
     outerSnippet: string;
@@ -187,6 +240,25 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
     const clone = element.cloneNode(true) as HTMLElement;
 
     function prune(node: HTMLElement, currentDepth: number) {
+      if (!node || !node.tagName) return;
+      const tag = node.tagName.toLowerCase();
+
+      node.removeAttribute('data-uaiselect-data');
+      node.removeAttribute('data-uaiselect-result');
+      node.removeAttribute('data-uaiselect-id');
+
+      const src = node.getAttribute('src');
+      if (src && src.startsWith('data:') && src.length > 64) {
+        node.setAttribute('src', `${src.slice(0, 32)}...[base64]`);
+      }
+
+      if (tag === 'svg') {
+        if (node.children.length > 0) {
+          node.innerHTML = '<!-- svg icon -->';
+        }
+        return;
+      }
+
       if (currentDepth >= maxDepth && node.children.length > 0) {
         node.textContent = `<!-- ... ${node.children.length} child elements truncated ... -->`;
         return;
@@ -229,11 +301,13 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
 
     const { innerSnippet, outerSnippet } = getCleanHTMLSnippet(element);
     const computedStyles = extractComputedStyles(element);
+    const parentContext = extractParentContext(element);
+    const anchors = extractElementAnchors(element);
 
     return {
       tagName: element.tagName.toLowerCase(),
       id: element.id || '',
-      className: element.className || '',
+      className: typeof element.className === 'string' ? element.className : '',
       classList,
       tailwindClasses,
       customClasses,
@@ -243,6 +317,8 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
       outerHTMLSnippet: outerSnippet,
       innerTextSnippet: (element.innerText || '').slice(0, 200).trim(),
       computedStyles,
+      parentContext,
+      anchors,
       rect: {
         x: Math.round(rect.x),
         y: Math.round(rect.y),
@@ -262,6 +338,32 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
       pageTitle: document.title,
       timestamp: Date.now(),
     };
+  }
+
+  let lastInspectedElement: HTMLElement | null = null;
+
+  function flashElementOnPage(el: HTMLElement) {
+    try {
+      const rect = el.getBoundingClientRect();
+      if (rect.width === 0 && rect.height === 0) return;
+      const flash = document.createElement('div');
+      flash.style.position = 'fixed';
+      flash.style.top = `${rect.top}px`;
+      flash.style.left = `${rect.left}px`;
+      flash.style.width = `${rect.width}px`;
+      flash.style.height = `${rect.height}px`;
+      flash.style.border = '2px solid #22d3ee';
+      flash.style.background = 'rgba(34, 211, 238, 0.12)';
+      flash.style.borderRadius = '4px';
+      flash.style.pointerEvents = 'none';
+      flash.style.zIndex = '2147483647';
+      flash.style.transition = 'opacity 0.35s ease-out';
+      document.documentElement.appendChild(flash);
+      setTimeout(() => {
+        flash.style.opacity = '0';
+        setTimeout(() => flash.remove(), 350);
+      }, 250);
+    } catch {}
   }
 
   // Visual Overlay Class running with 100% Firefox & Chrome compatibility
@@ -560,6 +662,7 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
 
       const target = this.currentElement || (document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null);
       if (!target) return;
+      lastInspectedElement = target;
 
       // Immediately hide inspector overlay
       if (this.container) {
@@ -620,7 +723,9 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
       const source = data?.source;
       const hierarchy = data?.hierarchy || [];
 
-      const compName = source?.componentName || (hierarchy.length > 0 ? (hierarchy.find((h) => h.isCustomComponent)?.name || hierarchy[0]?.name) : `<${element.tagName.toLowerCase()}>`);
+      const uiNodes = hierarchy.filter((h) => h.isCustomComponent && !h.isWrapper);
+      const targetNode = uiNodes[uiNodes.length - 1] || hierarchy[hierarchy.length - 1];
+      const compName = targetNode?.name || source?.componentName || `<${element.tagName.toLowerCase()}>`;
       const sourceText = source ? `${source.fileName.split('/').pop()}:${source.lineNumber}` : '';
       const dims = `${Math.round(rect.width)} × ${Math.round(rect.height)}`;
 
@@ -802,6 +907,36 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
     if (message.type === 'STOP_INSPECTION') {
       overlay.deactivate();
       sendResponse({ active: false });
+      return true;
+    }
+
+    if (message.type === 'SELECT_RELATIVE_ELEMENT') {
+      if (!lastInspectedElement || !document.contains(lastInspectedElement)) {
+        sendResponse({ ok: false });
+        return true;
+      }
+      let nextElem: HTMLElement | null = null;
+      if (message.direction === 'parent') {
+        const p = lastInspectedElement.parentElement;
+        if (p && p !== document.body && p !== document.documentElement) {
+          nextElem = p;
+        }
+      } else if (message.direction === 'child') {
+        nextElem = lastInspectedElement.firstElementChild as HTMLElement | null;
+      }
+
+      if (nextElem) {
+        lastInspectedElement = nextElem;
+        const data = extractFullElementData(nextElem);
+        chrome.runtime.sendMessage({
+          type: 'ELEMENT_SELECTED',
+          payload: data,
+        }).catch(() => {});
+        setTimeout(() => flashElementOnPage(nextElem!), 120);
+        sendResponse({ ok: true });
+      } else {
+        sendResponse({ ok: false });
+      }
       return true;
     }
 

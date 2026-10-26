@@ -1,4 +1,21 @@
-﻿import { SelectedElementData } from './types.js';
+import { ComponentHierarchyNode, SelectedElementData } from './types.js';
+
+function getCleanHierarchy(hierarchy: ComponentHierarchyNode[]): ComponentHierarchyNode[] {
+  if (!hierarchy || hierarchy.length === 0) return [];
+  const uiNodes = hierarchy.filter((n) => !n.isWrapper && n.name.trim().length > 2);
+  return uiNodes.length > 0 ? uiNodes : hierarchy.filter((n) => n.name.trim().length > 1);
+}
+
+function getTargetComponentName(data: SelectedElementData): string {
+  const clean = getCleanHierarchy(data.hierarchy);
+  for (let i = clean.length - 1; i >= 0; i--) {
+    if (clean[i].isCustomComponent) return clean[i].name;
+  }
+  if (data.source?.componentName && data.source.componentName.length > 2) {
+    return data.source.componentName;
+  }
+  return `<${data.tagName}>`;
+}
 
 export function formatDataContext(data: SelectedElementData): string {
   if (!data.dataContext) return '';
@@ -25,23 +42,37 @@ export function generatePrompt(
   mode: 'fix-visual' | 'add-feature' | 'refactor' | 'tailwind-convert' | 'custom' | 'explain' = 'fix-visual',
   userInstruction = ''
 ): string {
-  const componentName =
-    data.source?.componentName ||
-    (data.hierarchy.length > 0 ? data.hierarchy.find((h) => h.isCustomComponent)?.name || data.hierarchy[0]?.name : `<${data.tagName}>`);
+  const componentName = getTargetComponentName(data);
+  const cleanHierarchy = getCleanHierarchy(data.hierarchy).slice(-5);
+  const hierarchyStr =
+    cleanHierarchy.length > 0
+      ? cleanHierarchy.map((h) => `\`${h.name}\``).join(' > ')
+      : `\`<${data.tagName}>\``;
 
-  const fileLocation = data.source ? `${data.source.fileName}:${data.source.lineNumber}` : 'Ubicación no detectada';
-  const customClassesStr = data.customClasses.length > 0 ? `\n- **Clases personalizadas**: \`${data.customClasses.join(' ')}\`` : '';
+  const fileLocation = data.source
+    ? `${data.source.fileName}:${data.source.lineNumber}`
+    : 'Ubicación no detectada';
+  const customClassesStr =
+    data.customClasses.length > 0
+      ? `\n- **Clases personalizadas**: \`${data.customClasses.join(' ')}\``
+      : '';
+  const parentStr = data.parentContext
+    ? `\n- **Contenedor Padre (\`<${data.parentContext.tagName}>\`)**: display \`${data.parentContext.display}\`${data.parentContext.flexDirection ? ` (${data.parentContext.flexDirection})` : ''}${data.parentContext.gap ? `, gap \`${data.parentContext.gap}\`` : ''}`
+    : '';
+  const selectorStr = data.anchors?.uniqueSelector
+    ? `\n- **Selector DOM**: \`${data.anchors.uniqueSelector}\``
+    : '';
   const dataContextStr = formatDataContext(data);
 
   if (mode === 'fix-visual') {
     return `### 🛠️ Tarea: Corregir Estilos Visuales del Componente UI
 
 **Contexto del Elemento Seleccionado:**
-- **Componente**: \`${componentName}\`
+- **Componente Objetivo**: \`${componentName}\` (\`<${data.tagName}>\`)
 - **Archivo Origen**: \`${fileLocation}\`
-- **Etiqueta HTML**: \`<${data.tagName}>\`
+- **Jerarquía UI**: ${hierarchyStr}${selectorStr}
 - **Clases Tailwind actuales**: \`${data.tailwindClasses.join(' ') || 'ninguna'}\`${customClassesStr}
-- **Dimensiones en pantalla**: \`${data.rect.width}px × ${data.rect.height}px\`
+- **Dimensiones en pantalla**: \`${data.rect.width}px × ${data.rect.height}px\`${parentStr}
 ${dataContextStr}
 **Snippet HTML / JSX Actual:**
 \`\`\`html
@@ -58,9 +89,9 @@ Por favor, modifica directamente el archivo \`${fileLocation}\` aplicando los ca
     return `### 🚀 Tarea: Añadir Funcionalidad / Modificar Componente
 
 **Componente Objetivo:**
-- **Nombre**: \`${componentName}\`
+- **Nombre**: \`${componentName}\` (\`<${data.tagName}>\`)
 - **Archivo**: \`${fileLocation}\`
-- **Jerarquía**: ${data.hierarchy.map((h) => `\`${h.name}\``).join(' > ')}
+- **Jerarquía UI**: ${hierarchyStr}${selectorStr}
 ${dataContextStr}
 **Código Actual del Elemento:**
 \`\`\`html
@@ -77,8 +108,9 @@ Por favor, implementa la solución editando \`${fileLocation}\`.`;
     return `### 💡 Tarea: Explicar y Analizar Componente UI
 
 **Elemento Inspeccionado:**
-- **Componente**: \`${componentName}\`
+- **Componente**: \`${componentName}\` (\`<${data.tagName}>\`)
 - **Archivo**: \`${fileLocation}\`
+- **Jerarquía UI**: ${hierarchyStr}
 - **Clases**: \`${data.classList.join(' ')}\`
 ${dataContextStr}
 **Estructura HTML:**
@@ -92,7 +124,8 @@ Explica detalladamente la estructura, responsabilidades y estilos aplicados en e
   return `### ⚡ Modificación de Componente UI
 
 - **Componente**: \`${componentName}\` (\`${fileLocation}\`)
-- **Clases**: \`${data.classList.join(' ')}\`
+- **Jerarquía UI**: ${hierarchyStr}${selectorStr}
+- **Clases**: \`${data.classList.join(' ')}\`${parentStr}
 ${dataContextStr}
 \`\`\`html
 ${data.outerHTMLSnippet}

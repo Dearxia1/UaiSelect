@@ -28,6 +28,30 @@ export interface ComponentHierarchyNode {
   tag: string;
   source?: SourceLocation;
   isCustomComponent: boolean;
+  isWrapper?: boolean;
+}
+
+export interface ParentLayoutContext {
+  tagName: string;
+  id?: string;
+  classes: string[];
+  display: string;
+  position?: string;
+  flexDirection?: string;
+  justifyContent?: string;
+  alignItems?: string;
+  gap?: string;
+}
+
+export interface ElementSearchAnchors {
+  testId?: string;
+  ariaLabel?: string;
+  role?: string;
+  name?: string;
+  placeholder?: string;
+  href?: string;
+  textAnchor?: string;
+  uniqueSelector?: string;
 }
 
 export interface ComponentEventData {
@@ -54,6 +78,8 @@ export interface SelectedElementData {
   outerHTMLSnippet: string;
   innerTextSnippet: string;
   computedStyles: ComputedStyleSummary;
+  parentContext?: ParentLayoutContext;
+  anchors?: ElementSearchAnchors;
   dataContext?: ComponentDataContext;
   rect: {
     x: number;
@@ -121,4 +147,5 @@ export type ExtensionMessage =
   | { type: 'TAKE_SCREENSHOT' }
   | { type: 'SCREENSHOT_TAKEN'; screenshotUrl: string }
   | { type: 'GET_LAST_SELECTED' }
-  | { type: 'LAST_SELECTED_RESPONSE'; payload: SelectedElementData | null };
+  | { type: 'LAST_SELECTED_RESPONSE'; payload: SelectedElementData | null }
+  | { type: 'SELECT_RELATIVE_ELEMENT'; direction: 'parent' | 'child' };

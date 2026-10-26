@@ -1,7 +1,7 @@
 // UaiSelect Main World Engine
 // Runs directly inside the target webpage context with 100% native access to React Fiber, Vue, Svelte, and window
 
-import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHierarchyNode, ComponentDataContext, ComponentEventData } from '../types';
+import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHierarchyNode, ComponentDataContext, ComponentEventData, ParentLayoutContext, ElementSearchAnchors } from '../types';
 
 (function initUaiSelectMainWorld() {
   if ((window as any).__UAISELECT_MAIN_WORLD_INITIALIZED__) return;
@@ -87,19 +87,19 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
     if (!type) return null;
     if (typeof type === 'string') return type;
     if (typeof type === 'function') {
-      return type.displayName || type.name || 'AnonymousComponent';
+      return type.displayName || type.name || null;
     }
     if (typeof type === 'object') {
       if (type.$$typeof && typeof type.$$typeof === 'symbol') {
         const symbolStr = type.$$typeof.toString();
         if (symbolStr.includes('react.memo')) {
-          return getComponentName(type.type) ? `Memo(${getComponentName(type.type)})` : 'Memo';
+          return getComponentName(type.type) || type.displayName || null;
         }
         if (symbolStr.includes('react.forward_ref')) {
-          return type.render ? (type.render.displayName || type.render.name || 'ForwardRef') : 'ForwardRef';
+          return type.displayName || (type.render ? (type.render.displayName || type.render.name || null) : null);
         }
-        if (symbolStr.includes('react.provider')) {
-          return 'ContextProvider';
+        if (symbolStr.includes('react.provider') || symbolStr.includes('react.context')) {
+          return null;
         }
       }
       if (type.displayName) return type.displayName;
@@ -107,6 +107,65 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
       if (type.render) return getComponentName(type.render);
     }
     return null;
+  }
+
+  function isNoiseComponentName(name: string | null | undefined): boolean {
+    if (!name || typeof name !== 'string') return true;
+    const trimmed = name.trim();
+    if (trimmed.length <= 2) return true; // Minified symbols like e, N, s, m, i, oc, aQ, Ht
+    if (/^_+[a-zA-Z0-9]*$/.test(trimmed)) return true;
+    if (
+      /^(AnonymousComponent|Component|ForwardRef|Memo|Fragment|Suspense|StrictMode|Profiler|ContextProvider|ContextConsumer|Slot|SlotClone|Presence)$/i.test(
+        trimmed
+      )
+    ) {
+      return true;
+    }
+    if (/^(Primitive\.|Popper|Collection)/i.test(trimmed)) return true;
+    return false;
+  }
+
+  function isWrapperComponentName(name: string): boolean {
+    if (!name) return false;
+    if (
+      /(Provider|Context|Boundary|Consumer|FeatureFlags|ExperimentScope|Telemetry|Analytics|Profiler|Router|Routes|Route|RouteId|IsDataRoute|Location|Navigation|KeyboardScope|ScopedCommands|FocusScope|Portal|PartialEntry|BaseProviders)$/i.test(
+        name
+      )
+    ) {
+      return true;
+    }
+    if (/^(REACT-PARTIAL|With\(|hoc\(|Connect\(|Relay\()/i.test(name)) {
+      return true;
+    }
+    if (name.includes('Context') || name.includes('Provider') || name.includes('Boundary')) {
+      return true;
+    }
+    return false;
+  }
+
+  function getPrimaryComponentName(
+    source?: SourceLocation,
+    hierarchy?: ComponentHierarchyNode[],
+    tagName?: string
+  ): string {
+    if (hierarchy && hierarchy.length > 0) {
+      for (let i = hierarchy.length - 1; i >= 0; i--) {
+        const node = hierarchy[i];
+        if (node.isCustomComponent && !node.isWrapper && !isNoiseComponentName(node.name)) {
+          return node.name;
+        }
+      }
+      for (let i = hierarchy.length - 1; i >= 0; i--) {
+        const node = hierarchy[i];
+        if (node.isCustomComponent && !isNoiseComponentName(node.name)) {
+          return node.name;
+        }
+      }
+    }
+    if (source?.componentName && !isNoiseComponentName(source.componentName)) {
+      return source.componentName;
+    }
+    return tagName ? `<${tagName.toLowerCase()}>` : '<element>';
   }
 
   function extractReactSourceFromFiber(fiber: any): { fileName: string; lineNumber: number; columnNumber?: number } | null {
@@ -259,7 +318,7 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
           typeof current.type === 'function' ||
           (typeof current.type === 'object' && compName !== null && typeof current.type !== 'string');
 
-        if (compName && compName !== 'div' && compName !== 'span' && isCustom) {
+        if (compName && compName !== 'div' && compName !== 'span' && isCustom && !isNoiseComponentName(compName)) {
           if (!visitedNames.has(compName)) {
             visitedNames.add(compName);
 
@@ -274,14 +333,17 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
               };
             }
 
+            const isWrapper = isWrapperComponentName(compName);
+
             hierarchy.unshift({
               name: compName,
               tag: typeof current.type === 'string' ? current.type : 'component',
               source: nodeSource,
               isCustomComponent: true,
+              isWrapper,
             });
 
-            if (!source && nodeSource) {
+            if (!source && nodeSource && !isWrapper) {
               source = nodeSource;
             }
           }
@@ -292,12 +354,22 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
             fileName: sourceInfo.fileName,
             lineNumber: sourceInfo.lineNumber,
             columnNumber: sourceInfo.columnNumber,
-            componentName: compName || element.tagName.toLowerCase(),
+            componentName: (!isNoiseComponentName(compName) ? compName : undefined) || element.tagName.toLowerCase(),
             framework: 'react',
           };
         }
 
         current = current.return;
+      }
+
+      if (source && (!source.componentName || isNoiseComponentName(source.componentName))) {
+        const primaryComp = getPrimaryComponentName(source, hierarchy, element.tagName);
+        if (!primaryComp.startsWith('<')) {
+          source.componentName = primaryComp;
+        }
+        if (!source.framework) {
+          source.framework = 'react';
+        }
       }
     }
 
@@ -421,6 +493,111 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
     };
   }
 
+  function extractParentContext(element: HTMLElement): ParentLayoutContext | undefined {
+    const parent = element.parentElement;
+    if (!parent || parent === document.body || parent === document.documentElement) return undefined;
+    try {
+      const styles = window.getComputedStyle(parent);
+      const isFlex = styles.display.includes('flex');
+      const isGrid = styles.display.includes('grid');
+      return {
+        tagName: parent.tagName.toLowerCase(),
+        id: parent.id || undefined,
+        classes: Array.from(parent.classList || []).slice(0, 12),
+        display: styles.display,
+        position: styles.position !== 'static' ? styles.position : undefined,
+        flexDirection: isFlex ? styles.flexDirection : undefined,
+        justifyContent: (isFlex || isGrid) && styles.justifyContent !== 'normal' ? styles.justifyContent : undefined,
+        alignItems: (isFlex || isGrid) && styles.alignItems !== 'normal' ? styles.alignItems : undefined,
+        gap: styles.gap !== 'normal' && styles.gap !== '0px' ? styles.gap : undefined,
+      };
+    } catch {
+      return undefined;
+    }
+  }
+
+  function buildConciseSelector(element: HTMLElement): string {
+    const parts: string[] = [];
+    let curr: HTMLElement | null = element;
+    let depth = 0;
+
+    while (curr && curr !== document.body && curr !== document.documentElement && depth < 3) {
+      let part = curr.tagName.toLowerCase();
+      if (curr.id) {
+        part += `#${curr.id}`;
+        parts.unshift(part);
+        break;
+      }
+      const testId =
+        curr.getAttribute('data-testid') ||
+        curr.getAttribute('data-test') ||
+        curr.getAttribute('data-cy');
+      if (testId) {
+        part += `[data-testid="${testId}"]`;
+        parts.unshift(part);
+        break;
+      }
+      const aria = curr.getAttribute('aria-label');
+      if (aria && aria.length < 35 && depth === 0) {
+        part += `[aria-label="${aria.replace(/"/g, '\\"')}"]`;
+      } else {
+        const cleanClasses = Array.from(curr.classList || [])
+          .filter((c) => !c.includes(':') && !c.includes('[') && c.length < 28)
+          .slice(0, 2);
+        if (cleanClasses.length > 0) {
+          part += `.${cleanClasses.join('.')}`;
+        }
+      }
+      if (curr.parentElement) {
+        const siblings = Array.from(curr.parentElement.children).filter(
+          (s) => s.tagName === curr!.tagName
+        );
+        if (siblings.length > 1) {
+          const idx = siblings.indexOf(curr) + 1;
+          part += `:nth-of-type(${idx})`;
+        }
+      }
+      parts.unshift(part);
+      curr = curr.parentElement;
+      depth++;
+    }
+    return parts.join(' > ');
+  }
+
+  function extractElementAnchors(element: HTMLElement): ElementSearchAnchors {
+    const testId =
+      element.getAttribute('data-testid') ||
+      element.getAttribute('data-test') ||
+      element.getAttribute('data-cy') ||
+      element.getAttribute('data-qa') ||
+      undefined;
+    const ariaLabel =
+      element.getAttribute('aria-label') ||
+      element.getAttribute('title') ||
+      element.getAttribute('alt') ||
+      undefined;
+    const role = element.getAttribute('role') || undefined;
+    const name = element.getAttribute('name') || undefined;
+    const placeholder = element.getAttribute('placeholder') || undefined;
+    const href = element.getAttribute('href') || undefined;
+
+    const rawText = (element.innerText || element.textContent || '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const textAnchor = rawText.length > 0 ? rawText.slice(0, 80) : undefined;
+
+    return {
+      testId,
+      ariaLabel,
+      role,
+      name,
+      placeholder,
+      href,
+      textAnchor,
+      uniqueSelector: buildConciseSelector(element),
+    };
+  }
+
   function getCleanHTMLSnippet(element: HTMLElement, maxDepth = 2): {
     innerSnippet: string;
     outerSnippet: string;
@@ -428,6 +605,28 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
     const clone = element.cloneNode(true) as HTMLElement;
 
     function prune(node: HTMLElement, currentDepth: number) {
+      if (!node || !node.tagName) return;
+      const tag = node.tagName.toLowerCase();
+
+      // Remove temporary UaiSelect attributes
+      node.removeAttribute('data-uaiselect-data');
+      node.removeAttribute('data-uaiselect-result');
+      node.removeAttribute('data-uaiselect-id');
+
+      // Truncate long base64 data URLs on images
+      const src = node.getAttribute('src');
+      if (src && src.startsWith('data:') && src.length > 64) {
+        node.setAttribute('src', `${src.slice(0, 32)}...[base64]`);
+      }
+
+      // Collapse verbose SVG paths/vectors so they don't bloat prompts
+      if (tag === 'svg') {
+        if (node.children.length > 0) {
+          node.innerHTML = '<!-- svg icon -->';
+        }
+        return;
+      }
+
       if (currentDepth >= maxDepth && node.children.length > 0) {
         node.textContent = `<!-- ... ${node.children.length} child elements truncated ... -->`;
         return;
@@ -654,12 +853,14 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
 
     const { innerSnippet, outerSnippet } = getCleanHTMLSnippet(element);
     const computedStyles = extractComputedStyles(element);
+    const parentContext = extractParentContext(element);
+    const anchors = extractElementAnchors(element);
     const dataContext = extractComponentDataContext(element);
 
     return {
       tagName: element.tagName.toLowerCase(),
       id: element.id || '',
-      className: element.className || '',
+      className: typeof element.className === 'string' ? element.className : '',
       classList,
       tailwindClasses,
       customClasses,
@@ -669,6 +870,8 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
       outerHTMLSnippet: outerSnippet,
       innerTextSnippet: (element.innerText || '').slice(0, 200).trim(),
       computedStyles,
+      parentContext,
+      anchors,
       dataContext,
       rect: {
         x: Math.round(rect.x),
@@ -1004,7 +1207,7 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
       this.highlightBox.style.height = `${rect.height}px`;
 
       const { source, hierarchy } = extractMetadata(element);
-      const compName = source?.componentName || hierarchy[0]?.name || `<${element.tagName.toLowerCase()}>`;
+      const compName = getPrimaryComponentName(source, hierarchy, element.tagName);
       const sourceText = source ? `${source.fileName.split('/').pop()}:${source.lineNumber}` : '';
       const dims = `${Math.round(rect.width)} × ${Math.round(rect.height)}`;
 

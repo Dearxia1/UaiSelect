@@ -50,32 +50,25 @@ export const App: React.FC = () => {
     };
   }, []);
 
+  const getTargetTab = async (): Promise<chrome.tabs.Tab | undefined> => {
+    const tabsCurrent = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tabsCurrent && tabsCurrent.length > 0 && tabsCurrent[0].id) {
+      return tabsCurrent[0];
+    }
+    const tabsFocused = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    if (tabsFocused && tabsFocused.length > 0 && tabsFocused[0].id) {
+      return tabsFocused[0];
+    }
+    const allActive = await chrome.tabs.query({ active: true });
+    if (allActive && allActive.length > 0 && allActive[0].id) {
+      return allActive[0];
+    }
+    return undefined;
+  };
+
   const handleToggleInspector = async () => {
     try {
-      let targetTab: chrome.tabs.Tab | undefined;
-
-      // 1. Try current window
-      const tabsCurrent = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tabsCurrent && tabsCurrent.length > 0 && tabsCurrent[0].id) {
-        targetTab = tabsCurrent[0];
-      }
-
-      // 2. Try last focused window (standard in Firefox Sidebar)
-      if (!targetTab) {
-        const tabsFocused = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-        if (tabsFocused && tabsFocused.length > 0 && tabsFocused[0].id) {
-          targetTab = tabsFocused[0];
-        }
-      }
-
-      // 3. Fallback: any active tab
-      if (!targetTab) {
-        const allActive = await chrome.tabs.query({ active: true });
-        if (allActive && allActive.length > 0 && allActive[0].id) {
-          targetTab = allActive[0];
-        }
-      }
-
+      const targetTab = await getTargetTab();
       if (!targetTab?.id) return;
 
       chrome.tabs.sendMessage(targetTab.id, { type: 'TOGGLE_INSPECTOR' }).catch(async () => {
@@ -95,6 +88,17 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleNavigateRelative = async (direction: 'parent' | 'child') => {
+    try {
+      const targetTab = await getTargetTab();
+      if (!targetTab?.id) return;
+      chrome.tabs.sendMessage(targetTab.id, {
+        type: 'SELECT_RELATIVE_ELEMENT',
+        direction,
+      }).catch(() => {});
+    } catch {}
+  };
+
   const handleSettingsUpdated = (newSettings: AppSettings) => {
     if (newSettings.cards) {
       setCardsVisibility({ ...DEFAULT_CARDS, ...newSettings.cards });
@@ -110,12 +114,21 @@ export const App: React.FC = () => {
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
-      <main className="flex-1 p-3 space-y-3 overflow-y-auto max-w-md mx-auto w-full pb-8">
+      <main className="flex-1 p-2.5 space-y-2.5 overflow-y-auto max-w-md mx-auto w-full pb-8">
         {selectedElement ? (
           <>
-            {/* Component Hierarchy */}
+            {/* Component Identity & Clean Hierarchy */}
             {cardsVisibility.showHierarchy && selectedElement.hierarchy && selectedElement.hierarchy.length > 0 && (
-              <ComponentTree hierarchy={selectedElement.hierarchy} />
+              <ComponentTree
+                hierarchy={selectedElement.hierarchy}
+                elementData={selectedElement}
+                onNavigateRelative={handleNavigateRelative}
+              />
+            )}
+
+            {/* AI Prompt Generator & JSON */}
+            {cardsVisibility.showPrompt && (
+              <PromptBox elementData={selectedElement} />
             )}
 
             {/* Visual Snapshot */}
@@ -129,17 +142,13 @@ export const App: React.FC = () => {
                 tailwindClasses={selectedElement.tailwindClasses}
                 customClasses={selectedElement.customClasses}
                 computedStyles={selectedElement.computedStyles}
+                parentContext={selectedElement.parentContext}
               />
             )}
 
             {/* Props, Local State & Event Handlers */}
             {cardsVisibility.showState && (
               <StateCard dataContext={selectedElement.dataContext} />
-            )}
-
-            {/* AI Prompt Generator & JSON */}
-            {cardsVisibility.showPrompt && (
-              <PromptBox elementData={selectedElement} />
             )}
           </>
         ) : (

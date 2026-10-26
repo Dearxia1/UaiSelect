@@ -1,4 +1,4 @@
-﻿export interface SourceLocation {
+export interface SourceLocation {
   fileName: string;
   lineNumber: number;
   columnNumber?: number;
@@ -11,6 +11,30 @@ export interface ComponentHierarchyNode {
   tag: string;
   source?: SourceLocation;
   isCustomComponent?: boolean;
+  isWrapper?: boolean;
+}
+
+export interface ParentLayoutContext {
+  tagName: string;
+  id?: string;
+  classes: string[];
+  display: string;
+  position?: string;
+  flexDirection?: string;
+  justifyContent?: string;
+  alignItems?: string;
+  gap?: string;
+}
+
+export interface ElementSearchAnchors {
+  testId?: string;
+  ariaLabel?: string;
+  role?: string;
+  name?: string;
+  placeholder?: string;
+  href?: string;
+  textAnchor?: string;
+  uniqueSelector?: string;
 }
 
 export interface ComputedStyleSummary {
@@ -54,6 +78,8 @@ export interface SelectedElementData {
   outerHTMLSnippet: string;
   innerTextSnippet: string;
   computedStyles: ComputedStyleSummary;
+  parentContext?: ParentLayoutContext;
+  anchors?: ElementSearchAnchors;
   dataContext?: ComponentDataContext;
   rect: {
     x: number;
