@@ -13,12 +13,21 @@ import {
   Download,
   ChevronDown,
   ChevronUp,
+  Pin,
+  X,
 } from 'lucide-react';
 import { PromptMode, SelectedElementData } from '../../types';
-import { PROMPT_TEMPLATES, getTemplateById, generateElementJSON } from '../../utils/promptTemplates';
+import {
+  PROMPT_TEMPLATES,
+  getTemplateById,
+  generateElementJSON,
+  getTargetComponentName,
+} from '../../utils/promptTemplates';
 
 interface PromptBoxProps {
   elementData: SelectedElementData;
+  pinnedElement?: SelectedElementData | null;
+  onClearPinned?: () => void;
 }
 
 const TEMPLATE_ICONS: Record<string, React.ReactNode> = {
@@ -30,7 +39,11 @@ const TEMPLATE_ICONS: Record<string, React.ReactNode> = {
   MessageSquare: <MessageSquare className="w-3 h-3 shrink-0" />,
 };
 
-export const PromptBox: React.FC<PromptBoxProps> = ({ elementData }) => {
+export const PromptBox: React.FC<PromptBoxProps> = ({
+  elementData,
+  pinnedElement,
+  onClearPinned,
+}) => {
   const [outputFormat, setOutputFormat] = useState<'prompt' | 'json'>('prompt');
   const [activeMode, setActiveMode] = useState<PromptMode>('fix-visual');
   const [userInstruction, setUserInstruction] = useState('');
@@ -38,14 +51,18 @@ export const PromptBox: React.FC<PromptBoxProps> = ({ elementData }) => {
   const [copied, setCopied] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
+  const hasLiveChanges =
+    (elementData.liveClassChanges?.added.length || 0) > 0 ||
+    (elementData.liveClassChanges?.removed.length || 0) > 0;
+
   useEffect(() => {
     if (outputFormat === 'json') {
-      setGeneratedContent(generateElementJSON(elementData, userInstruction));
+      setGeneratedContent(generateElementJSON(elementData, userInstruction, pinnedElement));
     } else {
       const template = getTemplateById(activeMode);
-      setGeneratedContent(template.generatePrompt(elementData, userInstruction));
+      setGeneratedContent(template.generatePrompt(elementData, userInstruction, pinnedElement));
     }
-  }, [outputFormat, activeMode, userInstruction, elementData]);
+  }, [outputFormat, activeMode, userInstruction, elementData, pinnedElement]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(generatedContent);
@@ -124,6 +141,32 @@ export const PromptBox: React.FC<PromptBoxProps> = ({ elementData }) => {
               </button>
             );
           })}
+        </div>
+      )}
+
+      {/* Active Context Badges (Pinned Reference / Live Tweaks) */}
+      {(pinnedElement || hasLiveChanges) && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {hasLiveChanges && (
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-900 border border-zinc-700 text-[10px] font-mono text-zinc-200">
+              <span>⚡ Live Tweak incluido en el prompt</span>
+            </div>
+          )}
+          {pinnedElement && (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-zinc-900 border border-zinc-700 text-[10px] font-mono text-zinc-200">
+              <Pin className="w-2.5 h-2.5 text-zinc-400" />
+              <span>Ref #2: {getTargetComponentName(pinnedElement)}</span>
+              {onClearPinned && (
+                <button
+                  onClick={onClearPinned}
+                  className="text-zinc-400 hover:text-zinc-100 cursor-pointer"
+                  title="Quitar elemento de referencia"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 

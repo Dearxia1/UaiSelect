@@ -181,6 +181,33 @@ function formatParentContext(data: SelectedElementData): string {
   return `- Contenedor Padre (\`<${p.tagName}${p.id ? `#${p.id}` : ''}>\`): ${layoutParts.join(', ')}${classesStr}\n`;
 }
 
+function formatLiveClassDiff(data: SelectedElementData): string {
+  const diff = data.liveClassChanges;
+  if (!diff || (diff.added.length === 0 && diff.removed.length === 0)) return '';
+
+  const lines: string[] = ['\n**Cambios de Clases Previsualizados en el Navegador (Aplicar exactamente):**'];
+  if (diff.removed.length > 0) {
+    lines.push(`- **Eliminar clases:** \`${diff.removed.join(' ')}\``);
+  }
+  if (diff.added.length > 0) {
+    lines.push(`- **Añadir clases:** \`${diff.added.join(' ')}\``);
+  }
+  return `${lines.join('\n')}\n`;
+}
+
+function formatPinnedReference(pinned?: SelectedElementData | null): string {
+  if (!pinned) return '';
+  const refName = getTargetComponentName(pinned);
+  const refSource = pinned.source ? ` (\`${pinned.source.fileName}:${pinned.source.lineNumber}\`)` : '';
+  return `\n**Elemento #2 de Referencia / Comparación:**
+- Componente: \`${refName}\` → \`<${pinned.tagName}>\`${refSource}
+- Dimensiones: \`${pinned.computedStyles.width} × ${pinned.computedStyles.height}\` | display: \`${pinned.computedStyles.display}\`
+- Clases: \`${pinned.classList.join(' ') || 'ninguna'}\`
+\`\`\`html
+${pinned.outerHTMLSnippet.slice(0, 600)}
+\`\`\`\n`;
+}
+
 function formatDataContextPrompt(dataContext?: ComponentDataContext): string {
   if (!dataContext) return '';
 
@@ -217,11 +244,13 @@ export const PROMPT_TEMPLATES: PromptTemplate[] = [
     label: 'Estilos / Fix Visual',
     iconName: 'Wrench',
     description: 'Ajustar alineación, espaciado, colores o comportamiento responsive.',
-    generatePrompt: (data: SelectedElementData, userInstruction?: string) => {
+    generatePrompt: (data: SelectedElementData, userInstruction?: string, pinnedElement?: SelectedElementData | null) => {
       const targetName = getTargetComponentName(data);
       const hierarchyStr = formatHierarchyBreadcrumb(data);
       const anchorsStr = formatSearchAnchors(data);
       const parentStr = formatParentContext(data);
+      const liveDiffStr = formatLiveClassDiff(data);
+      const pinnedStr = formatPinnedReference(pinnedElement);
       const dataCtx = formatDataContextPrompt(data.dataContext);
 
       return `### Tarea: Corregir Estilos / Layout Visual
@@ -235,14 +264,14 @@ ${anchorsStr}**Layout y Estilos Actuales:**
 ${data.customClasses.length > 0 ? `- Clases CSS: \`${data.customClasses.join(' ')}\`\n` : ''}- Caja del elemento: \`${data.computedStyles.width} × ${data.computedStyles.height}\` | display: \`${data.computedStyles.display}\`${data.computedStyles.flexDirection ? ` (${data.computedStyles.flexDirection})` : ''}${data.computedStyles.gap ? ` | gap: \`${data.computedStyles.gap}\`` : ''}
 - Spacing: margin \`${data.computedStyles.margin}\` | padding \`${data.computedStyles.padding}\`
 - Colores: texto \`${data.computedStyles.color}\` | fondo \`${data.computedStyles.backgroundColor}\`
-${parentStr}${dataCtx}
+${parentStr}${liveDiffStr}${dataCtx}
 **HTML del Elemento:**
 \`\`\`html
 ${data.outerHTMLSnippet}
 \`\`\`
-
+${pinnedStr}
 **Cambio solicitado:**
-${userInstruction?.trim() || 'Corrige la alineación, espaciado y diseño visual de este elemento manteniendo consistencia con su contenedor padre.'}
+${userInstruction?.trim() || (liveDiffStr ? 'Aplica en el archivo fuente los cambios de clases previsualizados en el navegador.' : 'Corrige la alineación, espaciado y diseño visual de este elemento manteniendo consistencia con su contenedor padre.')}
 
 Aplica el cambio únicamente sobre este elemento (o su contenedor inmediato si el layout depende del padre) sin alterar efectos secundarios.`;
     },
@@ -252,10 +281,12 @@ Aplica el cambio únicamente sobre este elemento (o su contenedor inmediato si e
     label: 'Funcionalidad',
     iconName: 'Sparkles',
     description: 'Añadir eventos, estados, props o nueva lógica a este componente.',
-    generatePrompt: (data: SelectedElementData, userInstruction?: string) => {
+    generatePrompt: (data: SelectedElementData, userInstruction?: string, pinnedElement?: SelectedElementData | null) => {
       const targetName = getTargetComponentName(data);
       const hierarchyStr = formatHierarchyBreadcrumb(data);
       const anchorsStr = formatSearchAnchors(data);
+      const liveDiffStr = formatLiveClassDiff(data);
+      const pinnedStr = formatPinnedReference(pinnedElement);
       const dataCtx = formatDataContextPrompt(data.dataContext);
 
       return `### Tarea: Añadir Funcionalidad al Componente
@@ -264,12 +295,12 @@ Aplica el cambio únicamente sobre este elemento (o su contenedor inmediato si e
 ${data.source ? `- Archivo: \`${data.source.fileName}:${data.source.lineNumber}\`` : `- Componente a buscar: \`${targetName}\``}
 - Componente objetivo: \`${targetName}\` (\`<${data.tagName}>\`)
 - Jerarquía UI: ${hierarchyStr}
-${anchorsStr}${dataCtx}
+${anchorsStr}${liveDiffStr}${dataCtx}
 **Estructura Actual:**
 \`\`\`html
 ${data.outerHTMLSnippet}
 \`\`\`
-
+${pinnedStr}
 **Requerimiento a implementar:**
 ${userInstruction?.trim() || 'Añade la interactividad necesaria (manejo de estado, callbacks o eventos) a este elemento.'}
 
@@ -281,10 +312,12 @@ Edita el componente manteniendo el tipado TypeScript y la arquitectura actual de
     label: 'Refactorizar',
     iconName: 'RefreshCw',
     description: 'Mejorar arquitectura, legibilidad, tipado TypeScript o separar en subcomponentes.',
-    generatePrompt: (data: SelectedElementData, userInstruction?: string) => {
+    generatePrompt: (data: SelectedElementData, userInstruction?: string, pinnedElement?: SelectedElementData | null) => {
       const targetName = getTargetComponentName(data);
       const hierarchyStr = formatHierarchyBreadcrumb(data);
       const anchorsStr = formatSearchAnchors(data);
+      const liveDiffStr = formatLiveClassDiff(data);
+      const pinnedStr = formatPinnedReference(pinnedElement);
       const dataCtx = formatDataContextPrompt(data.dataContext);
 
       return `### Tarea: Refactorizar Componente UI
@@ -293,12 +326,12 @@ Edita el componente manteniendo el tipado TypeScript y la arquitectura actual de
 ${data.source ? `- Archivo: \`${data.source.fileName}:${data.source.lineNumber}\`\n` : ''}- Componente: \`${targetName}\` (\`<${data.tagName}>\`)
 - Jerarquía UI: ${hierarchyStr}
 ${anchorsStr}- Clases actuales: \`${data.classList.join(' ') || 'ninguna'}\`
-${dataCtx}
+${liveDiffStr}${dataCtx}
 **HTML Actual:**
 \`\`\`html
 ${data.outerHTMLSnippet}
 \`\`\`
-
+${pinnedStr}
 **Objetivo de refactorización:**
 ${userInstruction?.trim() || 'Simplifica la estructura de este componente, limpia clases redundantes y mejora su legibilidad manteniendo el comportamiento visual intacto.'}`;
     },
@@ -308,10 +341,12 @@ ${userInstruction?.trim() || 'Simplifica la estructura de este componente, limpi
     label: 'Tailwind CSS',
     iconName: 'Palette',
     description: 'Transformar estilos CSS inline o tradicionales a clases utilitarias de Tailwind.',
-    generatePrompt: (data: SelectedElementData, userInstruction?: string) => {
+    generatePrompt: (data: SelectedElementData, userInstruction?: string, pinnedElement?: SelectedElementData | null) => {
       const targetName = getTargetComponentName(data);
       const anchorsStr = formatSearchAnchors(data);
       const parentStr = formatParentContext(data);
+      const liveDiffStr = formatLiveClassDiff(data);
+      const pinnedStr = formatPinnedReference(pinnedElement);
 
       return `### Tarea: Optimizar / Convertir a Tailwind CSS
 
@@ -323,12 +358,12 @@ ${anchorsStr}**Estilos Computados Actuales:**
 - Padding / Margin: \`${data.computedStyles.padding}\` / \`${data.computedStyles.margin}\`
 - Color / Fondo: \`${data.computedStyles.color}\` / \`${data.computedStyles.backgroundColor}\`
 - Borde / Radio: \`${data.computedStyles.border}\` / \`${data.computedStyles.borderRadius}\`
-${parentStr}
+${parentStr}${liveDiffStr}
 **HTML Actual:**
 \`\`\`html
 ${data.outerHTMLSnippet}
 \`\`\`
-
+${pinnedStr}
 **Petición:**
 ${userInstruction?.trim() || 'Reemplaza los estilos personalizados o redundantes por clases utilitarias limpias y responsivas de Tailwind CSS.'}`;
     },
@@ -338,10 +373,11 @@ ${userInstruction?.trim() || 'Reemplaza los estilos personalizados o redundantes
     label: 'Explicar UI',
     iconName: 'HelpCircle',
     description: 'Comprender qué hace el componente, cómo está construido y cómo modificarlo.',
-    generatePrompt: (data: SelectedElementData, userInstruction?: string) => {
+    generatePrompt: (data: SelectedElementData, userInstruction?: string, pinnedElement?: SelectedElementData | null) => {
       const targetName = getTargetComponentName(data);
       const hierarchyStr = formatHierarchyBreadcrumb(data);
       const parentStr = formatParentContext(data);
+      const pinnedStr = formatPinnedReference(pinnedElement);
       const dataCtx = formatDataContextPrompt(data.dataContext);
 
       return `### Consulta: Explicación de Componente UI
@@ -355,7 +391,7 @@ ${parentStr}${dataCtx}
 \`\`\`html
 ${data.outerHTMLSnippet}
 \`\`\`
-
+${pinnedStr}
 **Pregunta:**
 ${userInstruction?.trim() || 'Explícame cómo está estructurado este componente, qué props/estados maneja y dónde debería tocar para modificar su diseño o comportamiento.'}`;
     },
@@ -365,11 +401,13 @@ ${userInstruction?.trim() || 'Explícame cómo está estructurado este component
     label: 'Personalizado',
     iconName: 'MessageSquare',
     description: 'Escribe tu propia instrucción con el contexto técnico exacto.',
-    generatePrompt: (data: SelectedElementData, userInstruction?: string) => {
+    generatePrompt: (data: SelectedElementData, userInstruction?: string, pinnedElement?: SelectedElementData | null) => {
       const targetName = getTargetComponentName(data);
       const hierarchyStr = formatHierarchyBreadcrumb(data);
       const anchorsStr = formatSearchAnchors(data);
       const parentStr = formatParentContext(data);
+      const liveDiffStr = formatLiveClassDiff(data);
+      const pinnedStr = formatPinnedReference(pinnedElement);
       const dataCtx = formatDataContextPrompt(data.dataContext);
 
       return `### Contexto de Edición UI
@@ -378,12 +416,12 @@ ${userInstruction?.trim() || 'Explícame cómo está estructurado este component
 ${data.source ? `- Archivo: \`${data.source.fileName}:${data.source.lineNumber}\` (${data.source.framework || 'Web'})\n` : ''}- Componente: \`${targetName}\` (\`<${data.tagName}>\`)
 - Jerarquía UI: ${hierarchyStr}
 ${anchorsStr}- Clases: \`${data.classList.join(' ') || 'none'}\`
-${parentStr}${dataCtx}
+${parentStr}${liveDiffStr}${dataCtx}
 **HTML:**
 \`\`\`html
 ${data.outerHTMLSnippet}
 \`\`\`
-
+${pinnedStr}
 **Instrucción:**
 ${userInstruction?.trim() || 'Realiza los cambios necesarios sobre este elemento.'}`;
     },
@@ -397,7 +435,11 @@ export function getTemplateById(id: PromptMode): PromptTemplate {
 /**
  * Generates a clean, structured JSON payload of the element context
  */
-export function generateElementJSON(data: SelectedElementData, userInstruction?: string): string {
+export function generateElementJSON(
+  data: SelectedElementData,
+  userInstruction?: string,
+  pinnedElement?: SelectedElementData | null
+): string {
   const cleanHierarchy = getCleanHierarchy(data.hierarchy, data.tagName);
   const targetComponent = getTargetComponentName(data);
 
@@ -419,7 +461,20 @@ export function generateElementJSON(data: SelectedElementData, userInstruction?:
           }
         : null,
       anchors: data.anchors || undefined,
+      liveClassChanges: data.liveClassChanges || undefined,
     },
+    referenceElement: pinnedElement
+      ? {
+          componentName: getTargetComponentName(pinnedElement),
+          tag: pinnedElement.tagName,
+          source: pinnedElement.source || null,
+          classes: pinnedElement.classList,
+          dimensions: {
+            width: pinnedElement.computedStyles.width,
+            height: pinnedElement.computedStyles.height,
+          },
+        }
+      : undefined,
     component: {
       hierarchy: cleanHierarchy.map((h) => ({
         name: h.name,

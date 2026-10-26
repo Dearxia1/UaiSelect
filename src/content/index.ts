@@ -343,6 +343,65 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
   }
 
   let lastInspectedElement: HTMLElement | null = null;
+  let originalClassList: string[] = [];
+  const addedClasses = new Set<string>();
+  const removedClasses = new Set<string>();
+
+  function setTargetElement(el: HTMLElement) {
+    lastInspectedElement = el;
+    originalClassList = Array.from(el.classList || []);
+    addedClasses.clear();
+    removedClasses.clear();
+  }
+
+  function showPageToast(text: string) {
+    try {
+      const toast = document.createElement('div');
+      toast.textContent = text;
+      toast.style.position = 'fixed';
+      toast.style.bottom = '28px';
+      toast.style.left = '50%';
+      toast.style.transform = 'translateX(-50%)';
+      toast.style.background = '#09090b';
+      toast.style.color = '#f4f4f5';
+      toast.style.padding = '8px 16px';
+      toast.style.borderRadius = '9999px';
+      toast.style.fontSize = '12px';
+      toast.style.fontWeight = '600';
+      toast.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      toast.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.85), 0 0 0 1px #27272a';
+      toast.style.zIndex = '2147483647';
+      toast.style.pointerEvents = 'none';
+      toast.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+      document.documentElement.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translate(-50%, 8px)';
+        setTimeout(() => toast.remove(), 250);
+      }, 1800);
+    } catch {}
+  }
+
+  function buildQuickCopyPrompt(data: SelectedElementData): string {
+    const uiNodes = (data.hierarchy || []).filter((h) => !h.isWrapper && h.name.length > 2);
+    const compName =
+      uiNodes[uiNodes.length - 1]?.name ||
+      data.source?.componentName ||
+      `<${data.tagName}>`;
+    const loc = data.source
+      ? `- Archivo: \`${data.source.fileName}:${data.source.lineNumber}\`\n`
+      : '';
+    const selector = data.anchors?.uniqueSelector
+      ? `- Selector DOM: \`${data.anchors.uniqueSelector}\`\n`
+      : '';
+    return `### Contexto UI (${compName})
+${loc}- Elemento: \`<${data.tagName}>\` (${data.rect.width}×${data.rect.height}px)
+${selector}- Clases: \`${data.classList.join(' ') || 'ninguna'}\`
+
+\`\`\`html
+${data.outerHTMLSnippet}
+\`\`\``;
+  }
 
   function flashElementOnPage(el: HTMLElement) {
     try {
@@ -562,7 +621,11 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
       navKbd.className = 'uaiselect-kbd';
       navKbd.textContent = '↑ / ↓ navegar';
 
-      this.banner.replaceChildren(dot, titleSpan, escKbd, navKbd);
+      const shiftKbd = document.createElement('span');
+      shiftKbd.className = 'uaiselect-kbd';
+      shiftKbd.textContent = 'Shift+Click copiar';
+
+      this.banner.replaceChildren(dot, titleSpan, escKbd, navKbd, shiftKbd);
 
       this.shadowRoot.appendChild(style);
       this.shadowRoot.appendChild(this.highlightBox);
@@ -664,7 +727,8 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
 
       const target = this.currentElement || (document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null);
       if (!target) return;
-      lastInspectedElement = target;
+      setTargetElement(target);
+      const isQuickCopy = e.shiftKey;
 
       // Immediately hide inspector overlay
       if (this.container) {
@@ -691,6 +755,13 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
       } catch {}
 
       const data = extractFullElementData(target);
+
+      if (isQuickCopy) {
+        const quickPrompt = buildQuickCopyPrompt(data);
+        navigator.clipboard.writeText(quickPrompt).then(() => {
+          showPageToast('✓ Contexto UI copiado al portapapeles');
+        }).catch(() => {});
+      }
 
       // Send to background directly
       chrome.runtime.sendMessage({
@@ -928,7 +999,7 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
       }
 
       if (nextElem) {
-        lastInspectedElement = nextElem;
+        setTargetElement(nextElem);
         const data = extractFullElementData(nextElem);
         chrome.runtime.sendMessage({
           type: 'ELEMENT_SELECTED',
@@ -939,6 +1010,79 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
       } else {
         sendResponse({ ok: false });
       }
+      return true;
+    }
+
+    if (message.type === 'PING_HIGHLIGHT_ELEMENT') {
+      if (lastInspectedElement && document.contains(lastInspectedElement)) {
+        flashElementOnPage(lastInspectedElement);
+        sendResponse({ ok: true });
+      } else {
+        sendResponse({ ok: false });
+      }
+      return true;
+    }
+
+    if (message.type === 'MUTATE_ELEMENT_CLASSES') {
+      if (!lastInspectedElement || !document.contains(lastInspectedElement)) {
+        sendResponse({ ok: false });
+        return true;
+      }
+
+      const el = lastInspectedElement;
+      if (message.action === 'toggle' && message.className) {
+        const cls = message.className.trim();
+        if (el.classList.contains(cls)) {
+          el.classList.remove(cls);
+          if (originalClassList.includes(cls)) {
+            removedClasses.add(cls);
+          }
+          addedClasses.delete(cls);
+        } else {
+          el.classList.add(cls);
+          removedClasses.delete(cls);
+          if (!originalClassList.includes(cls)) {
+            addedClasses.add(cls);
+          }
+        }
+      } else if (message.action === 'add' && message.className) {
+        const tokens = message.className
+          .split(/\s+/)
+          .map((t: string) => t.trim())
+          .filter(Boolean);
+        for (const cls of tokens) {
+          el.classList.add(cls);
+          removedClasses.delete(cls);
+          if (!originalClassList.includes(cls)) {
+            addedClasses.add(cls);
+          }
+        }
+      } else if (message.action === 'reset') {
+        el.className = originalClassList.join(' ');
+        addedClasses.clear();
+        removedClasses.clear();
+      }
+
+      const updatedStyles = extractComputedStyles(el);
+      const rect = el.getBoundingClientRect();
+      sendResponse({
+        ok: true,
+        computedStyles: updatedStyles,
+        rect: {
+          x: Math.round(rect.x),
+          y: Math.round(rect.y),
+          width: Math.round(rect.width),
+          height: Math.round(rect.height),
+          top: Math.round(rect.top),
+          left: Math.round(rect.left),
+          bottom: Math.round(rect.bottom),
+          right: Math.round(rect.right),
+        },
+        liveClassChanges: {
+          added: Array.from(addedClasses),
+          removed: Array.from(removedClasses),
+        },
+      });
       return true;
     }
 

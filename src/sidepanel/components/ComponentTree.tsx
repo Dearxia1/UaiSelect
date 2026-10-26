@@ -22,12 +22,14 @@ interface ComponentTreeProps {
   hierarchy: ComponentHierarchyNode[];
   elementData?: SelectedElementData;
   onNavigateRelative?: (direction: 'parent' | 'child') => void;
+  onPingHighlight?: () => void;
 }
 
 export const ComponentTree: React.FC<ComponentTreeProps> = ({
   hierarchy,
   elementData,
   onNavigateRelative,
+  onPingHighlight,
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [showWrappers, setShowWrappers] = useState(false);
@@ -89,7 +91,10 @@ export const ComponentTree: React.FC<ComponentTreeProps> = ({
     <div className="p-3 bg-zinc-950 border border-zinc-800/80 rounded-xl space-y-2.5 shadow-sm">
       {/* Element Identity & Quick Navigation Bar */}
       {elementData && (
-        <div className="flex items-center justify-between gap-2 pb-2 border-b border-zinc-900">
+        <div
+          onMouseEnter={() => onPingHighlight && onPingHighlight()}
+          className="flex items-center justify-between gap-2 pb-2 border-b border-zinc-900"
+        >
           <div className="flex items-center gap-1.5 min-w-0">
             <span className="font-mono font-semibold text-xs text-zinc-100 truncate">
               {targetName}

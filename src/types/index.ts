@@ -65,6 +65,11 @@ export interface ComponentDataContext {
   events?: ComponentEventData[];
 }
 
+export interface LiveClassChanges {
+  added: string[];
+  removed: string[];
+}
+
 export interface SelectedElementData {
   tagName: string;
   id: string;
@@ -72,6 +77,7 @@ export interface SelectedElementData {
   classList: string[];
   tailwindClasses: string[];
   customClasses: string[];
+  liveClassChanges?: LiveClassChanges;
   source?: SourceLocation;
   hierarchy: ComponentHierarchyNode[];
   innerHTMLSnippet: string;
@@ -110,7 +116,11 @@ export interface PromptTemplate {
   label: string;
   iconName: string;
   description: string;
-  generatePrompt: (data: SelectedElementData, userInstruction?: string) => string;
+  generatePrompt: (
+    data: SelectedElementData,
+    userInstruction?: string,
+    pinnedElement?: SelectedElementData | null
+  ) => string;
 }
 
 export interface CardVisibilitySettings {
@@ -148,4 +158,6 @@ export type ExtensionMessage =
   | { type: 'SCREENSHOT_TAKEN'; screenshotUrl: string }
   | { type: 'GET_LAST_SELECTED' }
   | { type: 'LAST_SELECTED_RESPONSE'; payload: SelectedElementData | null }
-  | { type: 'SELECT_RELATIVE_ELEMENT'; direction: 'parent' | 'child' };
+  | { type: 'SELECT_RELATIVE_ELEMENT'; direction: 'parent' | 'child' }
+  | { type: 'MUTATE_ELEMENT_CLASSES'; action: 'toggle' | 'add' | 'reset'; className?: string }
+  | { type: 'PING_HIGHLIGHT_ELEMENT' };
