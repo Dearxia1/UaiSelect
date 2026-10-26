@@ -124,9 +124,21 @@ if (!fs.existsSync(releasesDir)) {
 }
 
 // Package Chrome
-createZip(path.join(rootDir, 'dist'), path.join(releasesDir, 'uaiselect-chrome.zip'));
-console.log('✔ Generated releases/uaiselect-chrome.zip (Listo para Chrome Web Store)');
+try {
+  createZip(path.join(rootDir, 'dist'), path.join(releasesDir, 'uaiselect-chrome.zip'));
+  console.log('✔ Generated releases/uaiselect-chrome.zip (Listo para Chrome Web Store)');
+} catch (err) {
+  console.warn('⚠ Could not overwrite releases/uaiselect-chrome.zip (file may be in use)');
+}
 
 // Package Firefox
-createZip(path.join(rootDir, 'dist-firefox'), path.join(releasesDir, 'uaiselect-firefox.zip'));
-console.log('✔ Generated releases/uaiselect-firefox.zip (Listo para Firefox Add-ons Store)');
+const firefoxVersionedZip = path.join(releasesDir, 'uaiselect-firefox-v1.0.3.zip');
+createZip(path.join(rootDir, 'dist-firefox'), firefoxVersionedZip);
+console.log('✔ Generated releases/uaiselect-firefox-v1.0.3.zip');
+
+try {
+  createZip(path.join(rootDir, 'dist-firefox'), path.join(releasesDir, 'uaiselect-firefox.zip'));
+  console.log('✔ Generated releases/uaiselect-firefox.zip (Listo para Firefox Add-ons Store)');
+} catch (err) {
+  console.warn('⚠ releases/uaiselect-firefox.zip está bloqueado por Firefox; usa releases/uaiselect-firefox-v1.0.3.zip o dist-firefox/manifest.json');
+}

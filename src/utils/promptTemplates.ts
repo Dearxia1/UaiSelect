@@ -6,27 +6,120 @@ import {
   SelectedElementData,
 } from '../types';
 
-export function getCleanHierarchy(hierarchy: ComponentHierarchyNode[]): ComponentHierarchyNode[] {
-  if (!hierarchy || hierarchy.length === 0) return [];
-  const uiNodes = hierarchy.filter(
-    (node) => !node.isWrapper && node.name.trim().length > 2
-  );
-  return uiNodes.length > 0 ? uiNodes : hierarchy.filter((n) => n.name.trim().length > 1);
+export function normalizeComponentName(rawName: string | null | undefined): string | null {
+  if (!rawName || typeof rawName !== 'string') return null;
+  let name = rawName.trim();
+
+  // Unwrap common HOCs like Styled(Comp), Memo(Comp), ForwardRef(Comp)
+  let prev = '';
+  while (name !== prev) {
+    prev = name;
+    const match = name.match(
+      /^(?:Styled|Memo|ForwardRef|Connect|With[A-Za-z0-9_]*|inject|observer)\(([^)]+)\)$/i
+    );
+    if (match && match[1]) {
+      name = match[1].trim();
+    }
+  }
+
+  return name || null;
+}
+
+export function isNoiseComponentName(rawName: string | null | undefined): boolean {
+  const name = normalizeComponentName(rawName);
+  if (!name) return true;
+  if (name.startsWith('<') && name.endsWith('>')) return false; // HTML tag fallback like <button>
+
+  if (name.length <= 2) return true; // Minified: e, N, Y, q, eo, mV, eV, e9, Ht
+  if (/^[a-zA-Z_$]{1,2}[0-9]+$/.test(name)) return true; // Minified with numbers: e10, a12
+  if (/^_+[a-zA-Z0-9]*$/.test(name)) return true;
+  if (/^(styled|motion|primitive)\.[a-zA-Z0-9]+$/i.test(name)) return true; // styled.div, motion.div
+  if (
+    /^(AnonymousComponent|Component|ForwardRef|Memo|Fragment|Suspense|StrictMode|Profiler|ContextProvider|ContextConsumer|Slot|SlotClone|Presence|Collection|Popper)$/i.test(
+      name
+    )
+  ) {
+    return true;
+  }
+  return false;
+}
+
+export function isWrapperComponentName(rawName: string | null | undefined): boolean {
+  const name = normalizeComponentName(rawName);
+  if (!name) return false;
+  if (
+    /(Provider|Context|Boundary|Consumer|FeatureFlags|ExperimentScope|Telemetry|Analytics|Profiler|Router|Routes|Route|RouteId|IsDataRoute|Location|Navigation|KeyboardScope|ScopedCommands|FocusScope|Portal|PartialEntry|BaseProviders)$/i.test(
+      name
+    )
+  ) {
+    return true;
+  }
+  if (/^(REACT-PARTIAL|With\(|hoc\(|Connect\(|Relay\()/i.test(name)) {
+    return true;
+  }
+  if (name.includes('Context') || name.includes('Provider') || name.includes('Boundary')) {
+    return true;
+  }
+  return false;
+}
+
+export function getCleanHierarchy(
+  hierarchy: ComponentHierarchyNode[],
+  fallbackTagName?: string
+): ComponentHierarchyNode[] {
+  if (!hierarchy || hierarchy.length === 0) {
+    return fallbackTagName
+      ? [{ name: `<${fallbackTagName}>`, tag: fallbackTagName, isCustomComponent: false }]
+      : [];
+  }
+
+  const seen = new Set<string>();
+  const uiNodes: ComponentHierarchyNode[] = [];
+
+  for (const node of hierarchy) {
+    const cleanName = normalizeComponentName(node.name) || node.name;
+    if (isNoiseComponentName(cleanName)) continue;
+    const isWrap = node.isWrapper || isWrapperComponentName(cleanName);
+    if (isWrap) continue;
+
+    if (!seen.has(cleanName)) {
+      seen.add(cleanName);
+      uiNodes.push({
+        ...node,
+        name: cleanName,
+        isWrapper: false,
+      });
+    }
+  }
+
+  if (uiNodes.length > 0) {
+    return uiNodes;
+  }
+
+  // If all framework components were minified in production, return a clean tag node
+  if (fallbackTagName) {
+    return [{ name: `<${fallbackTagName}>`, tag: fallbackTagName, isCustomComponent: false }];
+  }
+
+  return [];
 }
 
 export function getTargetComponentName(data: SelectedElementData): string {
-  const clean = getCleanHierarchy(data.hierarchy);
+  const clean = getCleanHierarchy(data.hierarchy, data.tagName);
   for (let i = clean.length - 1; i >= 0; i--) {
-    if (clean[i].isCustomComponent) return clean[i].name;
+    if (clean[i].isCustomComponent && !clean[i].name.startsWith('<')) {
+      return clean[i].name;
+    }
   }
-  if (data.source?.componentName && data.source.componentName.length > 2) {
-    return data.source.componentName;
+  const normSource = normalizeComponentName(data.source?.componentName);
+  if (normSource && !isNoiseComponentName(normSource) && !isWrapperComponentName(normSource)) {
+    return normSource;
   }
   return `<${data.tagName}>`;
 }
 
 function formatHierarchyBreadcrumb(data: SelectedElementData, maxNodes = 5): string {
-  const clean = getCleanHierarchy(data.hierarchy);
+  const clean = getCleanHierarchy(data.hierarchy, data.tagName);
   if (clean.length === 0) return `\`<${data.tagName}>\``;
 
   const formatNode = (n: ComponentHierarchyNode) => {
@@ -305,7 +398,7 @@ export function getTemplateById(id: PromptMode): PromptTemplate {
  * Generates a clean, structured JSON payload of the element context
  */
 export function generateElementJSON(data: SelectedElementData, userInstruction?: string): string {
-  const cleanHierarchy = getCleanHierarchy(data.hierarchy);
+  const cleanHierarchy = getCleanHierarchy(data.hierarchy, data.tagName);
   const targetComponent = getTargetComponentName(data);
 
   const payload = {

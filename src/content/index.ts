@@ -58,10 +58,12 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
 
   function ensureMainWorldBridge() {
     if (isMainWorldExcludedHost()) return;
-    if (document.getElementById('uaiselect-main-world-bridge')) return;
+    if (document.getElementById('uaiselect-main-world-bridge-v103')) return;
     try {
+      const legacyBridge = document.getElementById('uaiselect-main-world-bridge');
+      if (legacyBridge) legacyBridge.remove();
       const scriptSrc = document.createElement('script');
-      scriptSrc.id = 'uaiselect-main-world-bridge';
+      scriptSrc.id = 'uaiselect-main-world-bridge-v103';
       if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) {
         scriptSrc.src = chrome.runtime.getURL('mainWorld.js');
         scriptSrc.onload = () => {

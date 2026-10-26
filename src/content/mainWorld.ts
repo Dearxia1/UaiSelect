@@ -4,8 +4,8 @@
 import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHierarchyNode, ComponentDataContext, ComponentEventData, ParentLayoutContext, ElementSearchAnchors } from '../types';
 
 (function initUaiSelectMainWorld() {
-  if ((window as any).__UAISELECT_MAIN_WORLD_INITIALIZED__) return;
-  (window as any).__UAISELECT_MAIN_WORLD_INITIALIZED__ = true;
+  if ((window as any).__UAISELECT_MAIN_WORLD_V103__) return;
+  (window as any).__UAISELECT_MAIN_WORLD_V103__ = true;
 
   const STACK_URL_REGEX = /(?:https?:\/\/[^/\s]+\/|file:\/\/\/?)((?:src|app|pages|components|lib|views)\/[^?:\s"']+\.[a-zA-Z0-9]+)(?:\?[^:\s"']*)?:(\d+)(?::(\d+))?/;
 
@@ -109,11 +109,29 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
     return null;
   }
 
-  function isNoiseComponentName(name: string | null | undefined): boolean {
-    if (!name || typeof name !== 'string') return true;
-    const trimmed = name.trim();
-    if (trimmed.length <= 2) return true; // Minified symbols like e, N, s, m, i, oc, aQ, Ht
+  function normalizeComponentName(rawName: string | null | undefined): string | null {
+    if (!rawName || typeof rawName !== 'string') return null;
+    let name = rawName.trim();
+    let prev = '';
+    while (name !== prev) {
+      prev = name;
+      const match = name.match(
+        /^(?:Styled|Memo|ForwardRef|Connect|With[A-Za-z0-9_]*|inject|observer)\(([^)]+)\)$/i
+      );
+      if (match && match[1]) {
+        name = match[1].trim();
+      }
+    }
+    return name || null;
+  }
+
+  function isNoiseComponentName(rawName: string | null | undefined): boolean {
+    const trimmed = normalizeComponentName(rawName);
+    if (!trimmed) return true;
+    if (trimmed.length <= 2) return true; // Minified symbols like e, N, s, m, i, oc, aQ, Ht, mV, e9
+    if (/^[a-zA-Z_$]{1,2}[0-9]+$/.test(trimmed)) return true; // e10, a12
     if (/^_+[a-zA-Z0-9]*$/.test(trimmed)) return true;
+    if (/^(styled|motion|primitive)\.[a-zA-Z0-9]+$/i.test(trimmed)) return true; // styled.div, motion.div
     if (
       /^(AnonymousComponent|Component|ForwardRef|Memo|Fragment|Suspense|StrictMode|Profiler|ContextProvider|ContextConsumer|Slot|SlotClone|Presence)$/i.test(
         trimmed
@@ -125,7 +143,8 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
     return false;
   }
 
-  function isWrapperComponentName(name: string): boolean {
+  function isWrapperComponentName(rawName: string): boolean {
+    const name = normalizeComponentName(rawName) || rawName;
     if (!name) return false;
     if (
       /(Provider|Context|Boundary|Consumer|FeatureFlags|ExperimentScope|Telemetry|Analytics|Profiler|Router|Routes|Route|RouteId|IsDataRoute|Location|Navigation|KeyboardScope|ScopedCommands|FocusScope|Portal|PartialEntry|BaseProviders)$/i.test(
@@ -312,7 +331,8 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
 
       let current = fiber;
       while (current) {
-        const compName = getComponentName(current.type);
+        const rawCompName = getComponentName(current.type);
+        const compName = normalizeComponentName(rawCompName);
         const sourceInfo = extractReactSourceFromFiber(current);
         const isCustom =
           typeof current.type === 'function' ||
@@ -843,12 +863,25 @@ import { SelectedElementData, ComputedStyleSummary, SourceLocation, ComponentHie
 
     const { source, hierarchy } = extractMetadata(element);
 
-    if (hierarchy.length === 0) {
-      hierarchy.push({
-        name: `<${element.tagName.toLowerCase()}>`,
-        tag: element.tagName.toLowerCase(),
-        isCustomComponent: false,
-      });
+    // If page only had minified components or wrappers, build a clean semantic DOM path
+    const hasCleanUIComponents = hierarchy.some((h) => h.isCustomComponent && !h.isWrapper);
+    if (!hasCleanUIComponents) {
+      const domTrail: ComponentHierarchyNode[] = [];
+      let curr: HTMLElement | null = element;
+      let depth = 0;
+      while (curr && curr !== document.body && curr !== document.documentElement && depth < 4) {
+        const tag = curr.tagName.toLowerCase();
+        const label = curr.id ? `<${tag}#${curr.id}>` : `<${tag}>`;
+        domTrail.unshift({
+          name: label,
+          tag,
+          isCustomComponent: false,
+          isWrapper: false,
+        });
+        curr = curr.parentElement;
+        depth++;
+      }
+      hierarchy.push(...domTrail);
     }
 
     const { innerSnippet, outerSnippet } = getCleanHTMLSnippet(element);

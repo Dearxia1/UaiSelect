@@ -11,7 +11,12 @@ import {
   MoreHorizontal,
 } from 'lucide-react';
 import { ComponentHierarchyNode, SelectedElementData } from '../../types';
-import { getCleanHierarchy, getTargetComponentName } from '../../utils/promptTemplates';
+import {
+  getCleanHierarchy,
+  getTargetComponentName,
+  isNoiseComponentName,
+  normalizeComponentName,
+} from '../../utils/promptTemplates';
 
 interface ComponentTreeProps {
   hierarchy: ComponentHierarchyNode[];
@@ -36,9 +41,12 @@ export const ComponentTree: React.FC<ComponentTreeProps> = ({
 
   if (!hierarchy || hierarchy.length === 0) return null;
 
-  const cleanNodes = getCleanHierarchy(hierarchy);
-  const wrapperCount = Math.max(0, hierarchy.length - cleanNodes.length);
-  const activeNodes = showWrappers ? hierarchy : cleanNodes;
+  const cleanNodes = getCleanHierarchy(hierarchy, elementData?.tagName);
+  const nonNoiseAllNodes = hierarchy
+    .map((n) => ({ ...n, name: normalizeComponentName(n.name) || n.name }))
+    .filter((n) => !isNoiseComponentName(n.name));
+  const wrapperCount = Math.max(0, nonNoiseAllNodes.length - cleanNodes.length);
+  const activeNodes = showWrappers && nonNoiseAllNodes.length > 0 ? nonNoiseAllNodes : cleanNodes;
 
   const MAX_VISIBLE = 4;
   const shouldCollapse = !expanded && activeNodes.length > MAX_VISIBLE;
